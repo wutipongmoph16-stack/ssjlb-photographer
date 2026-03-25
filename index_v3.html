@@ -389,52 +389,570 @@
       </div>
     </div>
 
-    <div
-      id="pdfTemplate"
-      class="hidden"
-      style="
-        padding: 30px;
-        background: white;
-        width: 800px;
-        color: black;
-        font-family: &quot;Sarabun&quot;;
-      "
-    >
-      <div style="text-align: center; margin-bottom: 20px">
-        <h3 style="margin: 0">แบบฟอร์มการขอใช้บริการ PR</h3>
-        <h4 style="margin: 0; color: gray">สำนักงานสาธารณสุขจังหวัดลพบุรี</h4>
-      </div>
-      <table
+    <div class="d-none">
+      <div
+        id="pdfTemplate"
         style="
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 20px;
-          font-size: 16px;
+          width: 210mm;
+          min-height: 297mm;
+          padding: 15mm 20mm;
+          background: white;
+          color: black;
+          font-family: &quot;Sarabun&quot;, sans-serif;
+          font-size: 15pt;
+          line-height: 1.5;
+          box-sizing: border-box;
         "
       >
-        <tr>
-          <td width="30%">
-            <strong>เลขที่คำขอ:</strong> <span id="pdfReqId"></span>
-          </td>
-          <td width="70%">
-            <strong>สถานะ:</strong> <span id="pdfStatus"></span>
-          </td>
-        </tr>
-        <tr>
-          <td><strong>ผู้ขอ:</strong> <span id="pdfName"></span></td>
-          <td><strong>กลุ่มงาน:</strong> <span id="pdfDept"></span></td>
-        </tr>
-      </table>
-      <div style="border: 1px solid #ccc; padding: 15px; border-radius: 8px">
-        <p><strong>โครงการ:</strong> <span id="pdfProj"></span></p>
-        <p>
-          <strong>วันที่จัด:</strong> <span id="pdfDate"></span>
-          <strong>เวลา:</strong> <span id="pdfTime"></span>
-        </p>
-        <p><strong>ยานพาหนะ:</strong> <span id="pdfVeh"></span></p>
-        <p><strong>ประเภทกิจกรรม:</strong> <span id="pdfActs"></span></p>
-        <p><strong>ช่องทาง PR:</strong> <span id="pdfPR"></span></p>
-        <p><strong>รับสื่อส่งกลับ:</strong> <span id="pdfDel"></span></p>
+        <div
+          style="
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-size: 16pt;
+            line-height: 1.3;
+          "
+        >
+          แบบฟอร์มการขอใช้บริการถ่ายภาพและประชาสัมพันธ์<br />
+          งานสื่อสารประชาสัมพันธ์และโสตทัศนศึกษา
+          กลุ่มงานพัฒนายุทธศาสตร์สาธารณสุข<br />
+          สำนักงานสาธารณสุขจังหวัดลพบุรี
+        </div>
+
+        <div style="text-align: right; margin-bottom: 15px">
+          วันที่
+          <span
+            id="pdfPrintDate"
+            style="
+              border-bottom: 1px dotted #000;
+              display: inline-block;
+              width: 150px;
+              text-align: center;
+            "
+          ></span>
+        </div>
+
+        <div style="margin-bottom: 10px">
+          <span style="display: inline-block; padding-left: 40px"
+            >ข้าพเจ้า</span
+          >
+          <span
+            id="pdfName"
+            style="
+              border-bottom: 1px dotted #000;
+              display: inline-block;
+              width: 250px;
+              text-align: center;
+            "
+          ></span>
+          ตำแหน่ง
+          <span
+            id="pdfPos"
+            style="
+              border-bottom: 1px dotted #000;
+              display: inline-block;
+              width: 210px;
+              text-align: center;
+            "
+          ></span>
+        </div>
+        <div style="margin-bottom: 10px">
+          กลุ่มงาน
+          <span
+            id="pdfDept"
+            style="
+              border-bottom: 1px dotted #000;
+              display: inline-block;
+              width: 350px;
+              text-align: center;
+            "
+          ></span>
+          โทรศัพท์มือถือ
+          <span
+            id="pdfPhone"
+            style="
+              border-bottom: 1px dotted #000;
+              display: inline-block;
+              width: 140px;
+              text-align: center;
+            "
+          ></span>
+        </div>
+
+        <div style="margin-bottom: 10px">
+          จัดกิจกรรม/โครงการ
+          <span
+            id="pdfProj"
+            style="
+              border-bottom: 1px dotted #000;
+              display: inline-block;
+              width: 550px;
+              text-align: center;
+            "
+          ></span>
+        </div>
+        <div style="margin-bottom: 10px">
+          ในวันที่
+          <span
+            id="pdfDate"
+            style="
+              border-bottom: 1px dotted #000;
+              display: inline-block;
+              width: 150px;
+              text-align: center;
+            "
+          ></span>
+          เวลา
+          <span
+            id="pdfTime"
+            style="
+              border-bottom: 1px dotted #000;
+              display: inline-block;
+              width: 150px;
+              text-align: center;
+            "
+          ></span>
+          น. ณ
+          <span
+            id="pdfLocation"
+            style="
+              border-bottom: 1px dotted #000;
+              display: inline-block;
+              width: 195px;
+              text-align: center;
+            "
+            >สสจ.ลพบุรี</span
+          >
+        </div>
+
+        <div style="margin-bottom: 10px; padding-left: 20px">
+          <span
+            class="pdf-chk"
+            id="chkVehPrivate"
+            style="
+              display: inline-block;
+              width: 15px;
+              height: 15px;
+              border: 1px solid #000;
+              text-align: center;
+              line-height: 15px;
+              font-size: 14px;
+              vertical-align: middle;
+            "
+          ></span>
+          รถส่วนตัวเจ้าของกิจกรรม/โครงการ &nbsp;&nbsp;
+          <span
+            class="pdf-chk"
+            id="chkVehOffice"
+            style="
+              display: inline-block;
+              width: 15px;
+              height: 15px;
+              border: 1px solid #000;
+              text-align: center;
+              line-height: 15px;
+              font-size: 14px;
+              vertical-align: middle;
+            "
+          ></span>
+          รถของ สสจ. ออกจาก สสจ. เวลา
+          <span
+            id="pdfDepTime"
+            style="
+              border-bottom: 1px dotted #000;
+              display: inline-block;
+              width: 80px;
+              text-align: center;
+            "
+          ></span>
+          น.
+        </div>
+
+        <div style="margin-bottom: 5px; font-weight: bold">
+          มีความประสงค์จะขอความอนุเคราะห์ดังนี้
+        </div>
+        <div style="padding-left: 20px; margin-bottom: 10px">
+          <div>
+            <span
+              class="pdf-chk"
+              id="chkAct1"
+              style="
+                display: inline-block;
+                width: 15px;
+                height: 15px;
+                border: 1px solid #000;
+                vertical-align: middle;
+              "
+            ></span>
+            ถ่ายภาพกิจกรรม/โครงการ ถ่ายภาพอุปกรณ์ต่าง ๆ
+          </div>
+          <div>
+            <span
+              class="pdf-chk"
+              id="chkAct2"
+              style="
+                display: inline-block;
+                width: 15px;
+                height: 15px;
+                border: 1px solid #000;
+                vertical-align: middle;
+              "
+            ></span>
+            ถ่ายภาพบุคคล
+          </div>
+          <div>
+            <span
+              class="pdf-chk"
+              id="chkAct3"
+              style="
+                display: inline-block;
+                width: 15px;
+                height: 15px;
+                border: 1px solid #000;
+                vertical-align: middle;
+              "
+            ></span>
+            ถ่ายภาพสถานที่
+          </div>
+          <div>
+            <span
+              class="pdf-chk"
+              id="chkAct4"
+              style="
+                display: inline-block;
+                width: 15px;
+                height: 15px;
+                border: 1px solid #000;
+                vertical-align: middle;
+              "
+            ></span>
+            ถ่ายวีดีโอและตัดต่อ บันทึกเสียง Live Streaming อื่นๆ.....
+            <span
+              id="pdfOtherAct"
+              style="
+                border-bottom: 1px dotted #000;
+                display: inline-block;
+                width: 150px;
+                text-align: center;
+              "
+            ></span>
+          </div>
+
+          <div style="margin-top: 5px">
+            <span
+              class="pdf-chk"
+              id="chkPR"
+              style="
+                display: inline-block;
+                width: 15px;
+                height: 15px;
+                border: 1px solid #000;
+                vertical-align: middle;
+              "
+            ></span>
+            หลังจากดำเนินการเสร็จสิ้น ขอให้จัดทำ Infographic อื่นๆ
+            และประชาสัมพันธ์กิจกรรม/ส่งผลการดำเนินงานผ่าน Facebook page :
+            สำนักงานสาธารณสุขจังหวัดลพบุรี
+          </div>
+        </div>
+
+        <div style="padding-left: 20px; margin-bottom: 15px">
+          การรับผลงาน:
+          <span
+            class="pdf-chk"
+            id="chkDel1"
+            style="
+              display: inline-block;
+              width: 15px;
+              height: 15px;
+              border: 1px solid #000;
+              vertical-align: middle;
+            "
+          ></span>
+          E-mail &nbsp;&nbsp;
+          <span
+            class="pdf-chk"
+            id="chkDel2"
+            style="
+              display: inline-block;
+              width: 15px;
+              height: 15px;
+              border: 1px solid #000;
+              vertical-align: middle;
+            "
+          ></span>
+          Line &nbsp;&nbsp;
+          <span
+            class="pdf-chk"
+            id="chkDel3"
+            style="
+              display: inline-block;
+              width: 15px;
+              height: 15px;
+              border: 1px solid #000;
+              vertical-align: middle;
+            "
+          ></span>
+          อื่นๆ
+          <span
+            id="pdfDelOther"
+            style="
+              border-bottom: 1px dotted #000;
+              display: inline-block;
+              width: 150px;
+              text-align: center;
+            "
+          ></span>
+        </div>
+
+        <div style="font-size: 13pt; margin-bottom: 20px">
+          <span style="display: inline-block; padding-left: 30px"
+            >ขอให้ผู้เกี่ยวข้อง
+            แนบโครงการ/คำกล่าวเปิด/กำหนดการจัดกิจกรรม/ข้อมูลที่ต้องการประชาสัมพันธ์
+            มาด้วย โดยแนบเป็นเอกสารมาพร้อมแบบฟอร์มนี้ หรือส่งไฟล์มาที่
+            <b>prlb@moph.go.th</b></span
+          ><br />
+          <b><u>หมายเหตุ</u></b> กลุ่มงานพัฒนายุทธศาสตร์สาธารณสุข
+          พิจารณาจัดลำดับการปฏิบัติงานของเจ้าหน้าที่ตามใบขอใช้บริการที่ได้รับการอนุมัติ
+          และขอสงวนสิทธิ์งดให้บริการ
+          ในกรณีที่อัตรากำลังเจ้าหน้าที่ไม่เพียงพอหรือติดภารกิจอื่น
+        </div>
+
+        <table
+          style="
+            width: 100%;
+            text-align: center;
+            margin-top: 20px;
+            border-collapse: collapse;
+          "
+        >
+          <tr>
+            <td style="width: 50%; vertical-align: top; padding: 10px">
+              <div
+                style="
+                  font-weight: bold;
+                  margin-bottom: 20px;
+                  text-decoration: underline;
+                "
+              >
+                สำหรับผู้ขอใช้บริการ
+              </div>
+              ลงชื่อ
+              <span
+                style="
+                  border-bottom: 1px dotted #000;
+                  display: inline-block;
+                  width: 180px;
+                "
+              ></span>
+              ผู้ขอใช้บริการ<br />
+              (
+              <span
+                id="pdfSignName"
+                style="
+                  border-bottom: 1px dotted #000;
+                  display: inline-block;
+                  width: 180px;
+                "
+              ></span>
+              )<br />
+              วันที่
+              <span
+                style="
+                  border-bottom: 1px dotted #000;
+                  display: inline-block;
+                  width: 180px;
+                "
+              ></span>
+            </td>
+            <td style="width: 50%; vertical-align: top; padding: 10px">
+              <div
+                style="
+                  font-weight: bold;
+                  margin-bottom: 20px;
+                  text-decoration: underline;
+                "
+              >
+                สำหรับเจ้าหน้าที่
+              </div>
+              มอบหมายให้
+              <span
+                id="pdfAssignName"
+                style="
+                  border-bottom: 1px dotted #000;
+                  display: inline-block;
+                  width: 180px;
+                "
+              ></span>
+              ดำเนินการ<br />
+              ลงชื่อ
+              <span
+                style="
+                  border-bottom: 1px dotted #000;
+                  display: inline-block;
+                  width: 180px;
+                "
+              ></span
+              ><br />
+              (
+              <span
+                style="
+                  border-bottom: 1px dotted #000;
+                  display: inline-block;
+                  width: 180px;
+                "
+              ></span>
+              )<br />
+              วันที่
+              <span
+                style="
+                  border-bottom: 1px dotted #000;
+                  display: inline-block;
+                  width: 180px;
+                "
+              ></span>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2" style="padding-top: 20px">
+              <div
+                style="
+                  font-weight: bold;
+                  margin-bottom: 15px;
+                  text-decoration: underline;
+                "
+              >
+                สำหรับผู้ให้บริการ/ผู้ปฏิบัติงาน
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td
+              style="vertical-align: top; text-align: left; padding-left: 40px"
+            >
+              <div style="margin-bottom: 5px">
+                <span
+                  style="
+                    display: inline-block;
+                    width: 15px;
+                    height: 15px;
+                    border: 1px solid #000;
+                  "
+                ></span>
+                อนุมัติ / เห็นควร
+              </div>
+              <div style="margin-bottom: 5px">
+                <span
+                  style="
+                    display: inline-block;
+                    width: 15px;
+                    height: 15px;
+                    border: 1px solid #000;
+                  "
+                ></span>
+                ทราบ/ปฏิบัติ
+              </div>
+              <div style="margin-bottom: 5px">
+                <span
+                  style="
+                    display: inline-block;
+                    width: 15px;
+                    height: 15px;
+                    border: 1px solid #000;
+                  "
+                ></span>
+                ไม่สามารถปฏิบัติงานได้ เนื่องจาก
+                <span
+                  style="
+                    border-bottom: 1px dotted #000;
+                    display: inline-block;
+                    width: 120px;
+                  "
+                ></span>
+              </div>
+              <div style="margin-bottom: 20px">
+                <span
+                  style="
+                    display: inline-block;
+                    width: 15px;
+                    height: 15px;
+                    border: 1px solid #000;
+                  "
+                ></span>
+                ไม่อนุมัติดำเนินการ เนื่องจาก
+                <span
+                  style="
+                    border-bottom: 1px dotted #000;
+                    display: inline-block;
+                    width: 130px;
+                  "
+                ></span>
+              </div>
+
+              <div style="text-align: center">
+                ลงชื่อ
+                <span
+                  style="
+                    border-bottom: 1px dotted #000;
+                    display: inline-block;
+                    width: 180px;
+                  "
+                ></span>
+                ผู้ปฏิบัติงาน<br />
+                (
+                <span
+                  style="
+                    border-bottom: 1px dotted #000;
+                    display: inline-block;
+                    width: 180px;
+                  "
+                ></span>
+                )<br />
+                วันที่
+                <span
+                  style="
+                    border-bottom: 1px dotted #000;
+                    display: inline-block;
+                    width: 180px;
+                  "
+                ></span>
+              </div>
+            </td>
+            <td style="vertical-align: bottom; text-align: center">
+              ลงชื่อ
+              <span
+                style="
+                  border-bottom: 1px dotted #000;
+                  display: inline-block;
+                  width: 180px;
+                "
+              ></span
+              ><br />
+              (นายธีรยุทธ ปานพรหม)<br />
+              หัวหน้ากลุ่มงานพัฒนายุทธศาสตร์สาธารณสุข<br />
+              วันที่
+              <span
+                style="
+                  border-bottom: 1px dotted #000;
+                  display: inline-block;
+                  width: 180px;
+                "
+              ></span>
+            </td>
+          </tr>
+        </table>
+
+        <div
+          style="
+            position: absolute;
+            top: 15mm;
+            right: 20mm;
+            font-size: 10pt;
+            color: gray;
+          "
+        >
+          Ref: <span id="pdfReqId"></span>
+        </div>
       </div>
     </div>
 
@@ -961,38 +1479,139 @@
           : Swal.fire("ผิดพลาด", res.message, "error");
       }
 
-      // PDF Export
+      // --- PDF EXPORT (ฟอร์มราชการ) ---
       function generatePDF(id) {
-        const req = userRequestsData.find((r) => r.RequestID === id);
+        let req;
+        // รองรับการทำงานทั้งแบบดึงจาก Mock (สำหรับทดสอบ) และดึงจากตัวแปร userRequestsData (ระบบจริง)
+        if (typeof mockRequests !== "undefined")
+          req = mockRequests.find((r) => r.RequestID === id);
+        else if (typeof userRequestsData !== "undefined")
+          req = userRequestsData.find((r) => r.RequestID === id);
+        else if (typeof allRequestsData !== "undefined")
+          req = allRequestsData.find((r) => r.RequestID === id);
+
         if (!req) return;
+
+        const checkMark = "&#10003;"; // เครื่องหมายติ๊กถูก (✓)
+
+        // 1. ล้างค่า Checkbox เก่าทั้งหมด
+        document
+          .querySelectorAll(".pdf-chk")
+          .forEach((el) => (el.innerHTML = ""));
+
+        // 2. ข้อมูลทั่วไป
         document.getElementById("pdfReqId").innerText = req.RequestID;
-        document.getElementById("pdfStatus").innerText = req.Status;
+        document.getElementById("pdfPrintDate").innerText =
+          new Date().toLocaleDateString("th-TH");
         document.getElementById("pdfName").innerText = req.FullName;
+        document.getElementById("pdfPos").innerText = req.Position || "-"; // ใช้จากข้อมูลถ้ามี
         document.getElementById("pdfDept").innerText = req.Department;
+        document.getElementById("pdfPhone").innerText = req.Phone || "-";
         document.getElementById("pdfProj").innerText = req.ProjectName;
         document.getElementById("pdfDate").innerText = new Date(
           req.EventDate,
         ).toLocaleDateString("th-TH");
         document.getElementById("pdfTime").innerText =
-          req.StartTime + " - " + req.EndTime + " น.";
-        document.getElementById("pdfVeh").innerText =
-          req.Vehicle + (req.DepTime ? ` (ออก ${req.DepTime} น.)` : "");
-        document.getElementById("pdfActs").innerText = req.Activities;
-        document.getElementById("pdfPR").innerText = req.PRChannels;
-        document.getElementById("pdfDel").innerText = req.Delivery;
+          req.StartTime + " - " + req.EndTime;
+
+        // 3. ยานพาหนะ
+        if (req.Vehicle.includes("ส่วนตัว"))
+          document.getElementById("chkVehPrivate").innerHTML = checkMark;
+        if (req.Vehicle.includes("สสจ.")) {
+          document.getElementById("chkVehOffice").innerHTML = checkMark;
+          document.getElementById("pdfDepTime").innerText = req.DepTime || "-";
+        } else {
+          document.getElementById("pdfDepTime").innerText = "";
+        }
+
+        // 4. ประเภทกิจกรรม
+        let act = req.Activities;
+        if (act.includes("กิจกรรม") || act.includes("อุปกรณ์"))
+          document.getElementById("chkAct1").innerHTML = checkMark;
+        if (act.includes("บุคคล"))
+          document.getElementById("chkAct2").innerHTML = checkMark;
+        if (act.includes("สถานที่"))
+          document.getElementById("chkAct3").innerHTML = checkMark;
+
+        let isOtherAct = false;
+        if (
+          act.includes("วีดีโอ") ||
+          act.includes("วิดีโอ") ||
+          act.includes("เสียง") ||
+          act.includes("Live") ||
+          act.includes("อื่นๆ")
+        ) {
+          document.getElementById("chkAct4").innerHTML = checkMark;
+          let others = [];
+          if (act.includes("วีดีโอ") || act.includes("วิดีโอ"))
+            others.push("ถ่ายวิดีโอ/ตัดต่อ");
+          if (act.includes("เสียง")) others.push("บันทึกเสียง");
+          if (act.includes("Live")) others.push("Live Streaming");
+
+          let otherMatch = act.match(/อื่นๆ \((.*?)\)/);
+          if (otherMatch) others.push(otherMatch[1]);
+
+          document.getElementById("pdfOtherAct").innerText = others.join(", ");
+        } else {
+          document.getElementById("pdfOtherAct").innerText = "";
+        }
+
+        // 5. การประชาสัมพันธ์ (Infographic / FB)
+        if (
+          req.Activities.includes("Infographic") ||
+          req.PRChannels.includes("Facebook")
+        ) {
+          document.getElementById("chkPR").innerHTML = checkMark;
+        }
+
+        // 6. การส่งผลงาน
+        let del = req.Delivery;
+        if (del.includes("e-Mail") || del.includes("E-mail"))
+          document.getElementById("chkDel1").innerHTML = checkMark;
+        if (
+          del.includes("LINE") ||
+          del.includes("Line") ||
+          del.includes("ไลน์")
+        )
+          document.getElementById("chkDel2").innerHTML = checkMark;
+
+        if (
+          !del.includes("e-Mail") &&
+          !del.includes("E-mail") &&
+          !del.includes("LINE") &&
+          !del.includes("Line") &&
+          !del.includes("ไลน์")
+        ) {
+          document.getElementById("chkDel3").innerHTML = checkMark;
+          document.getElementById("pdfDelOther").innerText = del;
+        } else {
+          document.getElementById("pdfDelOther").innerText = "";
+        }
+
+        // 7. ลายเซ็นต์ และการมอบหมาย
+        document.getElementById("pdfSignName").innerText = req.FullName;
+        document.getElementById("pdfAssignName").innerText =
+          req.AssignedTo || "";
+
+        // สั่งปริ้น PDF
         const element = document.getElementById("pdfTemplate");
-        element.classList.remove("hidden");
+        element.parentElement.classList.remove("d-none"); // แสดงชั่วคราวเพื่อให้ lib อ่านค่าได้
+
+        const opt = {
+          margin: 0,
+          filename: `PR_${req.RequestID}.pdf`,
+          image: { type: "jpeg", quality: 1 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        };
+
         html2pdf()
-          .set({
-            margin: 10,
-            filename: `PR_${id}.pdf`,
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-          })
+          .set(opt)
           .from(element)
           .save()
-          .then(() => element.classList.add("hidden"));
+          .then(() => {
+            element.parentElement.classList.add("d-none"); // ซ่อนกลับเมื่อเสร็จสิ้น
+          });
       }
 
       // Register Form
