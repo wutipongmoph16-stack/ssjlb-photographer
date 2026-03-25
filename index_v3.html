@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ระบบขอใช้บริการ PR สสจ.ลพบุรี</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script
+      charset="utf-8"
+      src="https://static.line-scdn.net/liff/edge/2/sdk.js"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+    <style>
+      body {
+        font-family: "Sarabun", sans-serif;
+        background-color: #f1f5f9;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .bg-main {
+        background: #0f766e;
+        color: white;
+      }
+      .table-responsive {
+        max-height: 500px;
+      }
+      #calendar {
+        background: white;
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .fc-event {
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-dark bg-main hidden" id="mainNav">
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="#">ระบบ PR สสจ.ลพบุรี</a>
+        <div class="d-flex">
+          <span class="navbar-text me-3 text-light" id="navUserName"></span
+          ><button class="btn btn-sm btn-danger" onclick="logout()">
+            ออกจากระบบ
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container py-4">
+      <div id="authSection" class="row">
+        <div class="col-lg-7 mb-4">
+          <h5 class="fw-bold text-teal mb-3">
+            <i class="bi bi-calendar-check"></i> ตารางคิวงานประชาสัมพันธ์
+            (อนุมัติแล้ว)
+          </h5>
+          <div id="calendar"></div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="card p-4 text-center" id="loginBox">
+            <img src="Logo-MOPH.png" width="70" class="mx-auto mb-3" />
+            <h4 class="mb-3 text-teal fw-bold">เข้าสู่ระบบ สสจ.ลพบุรี</h4>
+            <button
+              class="btn btn-success w-100 mb-3 py-2 fw-bold"
+              onclick="loginWithLine()"
+            >
+              เข้าสู่ระบบด้วย LINE
+            </button>
+            <div class="text-muted mb-3">--- หรือเข้าด้วย Username ---</div>
+            <input
+              type="text"
+              id="logUser"
+              class="form-control mb-2"
+              placeholder="Username"
+            />
+            <input
+              type="password"
+              id="logPass"
+              class="form-control mb-3"
+              placeholder="Password"
+            />
+            <button class="btn btn-primary w-100 mb-3" onclick="manualLogin()">
+              เข้าสู่ระบบ
+            </button>
+            <small
+              >ยังไม่มีบัญชี?
+              <a href="#" onclick="toggleAuth()">ลงทะเบียนใหม่</a></small
+            >
+          </div>
+
+          <div class="card p-4 hidden" id="regBox">
+            <h5 class="text-center mb-3 fw-bold">ลงทะเบียนผู้ใช้ใหม่</h5>
+            <div
+              id="lineBindAlert"
+              class="alert alert-info hidden small text-center"
+            >
+              ระบบจะผูกบัญชีนี้เข้ากับ LINE ของคุณอัตโนมัติ
+            </div>
+            <form id="regForm">
+              <input
+                type="text"
+                name="username"
+                class="form-control mb-2"
+                placeholder="Username"
+                required
+              />
+              <input
+                type="password"
+                name="password"
+                class="form-control mb-2"
+                placeholder="Password"
+                required
+              />
+              <hr />
+              <input
+                type="text"
+                name="fullName"
+                class="form-control mb-2"
+                placeholder="ชื่อ-สกุล"
+                required
+              />
+              <select
+                name="position"
+                id="ddPos"
+                class="form-select mb-2"
+                required
+              >
+                <option>กำลังโหลด...</option>
+              </select>
+              <select
+                name="department"
+                id="ddDept"
+                class="form-select mb-2"
+                required
+              >
+                <option>กำลังโหลด...</option>
+              </select>
+              <input
+                type="text"
+                name="phone"
+                class="form-control mb-2"
+                placeholder="เบอร์โทรศัพท์"
+                required
+              />
+              <input
+                type="email"
+                name="email"
+                class="form-control mb-3"
+                placeholder="อีเมล (สำหรับรับแจ้งเตือน)"
+                required
+              />
+              <button type="submit" class="btn btn-success w-100 mb-2">
+                ยืนยันลงทะเบียน
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-secondary w-100"
+                onclick="toggleAuth()"
+              >
+                กลับไปหน้า Login
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div id="userDash" class="hidden">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold">รายการขอใช้บริการของฉัน</h4>
+          <button class="btn btn-primary" onclick="showForm()">
+            + สร้างคำขอใหม่
+          </button>
+        </div>
+        <div class="card p-3 table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>รหัสคำขอ</th>
+                <th>โครงการ</th>
+                <th>วันที่จัด</th>
+                <th>สถานะ</th>
+                <th class="text-end">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="adminDash" class="hidden">
+        <h4 class="mb-3 fw-bold">จัดการคำขอ (Admin)</h4>
+        <div class="card p-3 table-responsive">
+          <table
+            class="table table-hover align-middle"
+            style="font-size: 0.9rem"
+          >
+            <thead>
+              <tr>
+                <th>รหัสคำขอ</th>
+                <th>ผู้ขอ</th>
+                <th>โครงการ</th>
+                <th>กิจกรรม</th>
+                <th>สถานะ</th>
+                <th class="text-end">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="reqFormSec" class="row justify-content-center hidden">
+        <div class="col-md-9">
+          <div class="card p-4">
+            <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+              <h5 class="fw-bold text-primary" id="formTitle">
+                สร้างคำขอใช้บริการ
+              </h5>
+              <button class="btn btn-close" onclick="showUserDash()"></button>
+            </div>
+            <form id="serviceForm">
+              <input type="hidden" id="editId" name="editId" />
+              <div class="row g-2 mb-3">
+                <div class="col-md-12">
+                  <label class="small text-muted">ชื่อโครงการ/กิจกรรม</label
+                  ><input
+                    type="text"
+                    id="projectName"
+                    name="projectName"
+                    class="form-control"
+                    required
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="small text-muted">วันที่จัด</label
+                  ><input
+                    type="date"
+                    id="eventDate"
+                    name="eventDate"
+                    class="form-control"
+                    required
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="small text-muted">เวลาเริ่ม (น.)</label
+                  ><input
+                    type="time"
+                    id="startTime"
+                    name="startTime"
+                    class="form-control"
+                    required
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="small text-muted">เวลาสิ้นสุด (น.)</label
+                  ><input
+                    type="time"
+                    id="endTime"
+                    name="endTime"
+                    class="form-control"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                  <label class="small text-muted">ยานพาหนะ</label
+                  ><select
+                    name="vehicle"
+                    id="ddVeh"
+                    class="form-select"
+                    required
+                  ></select>
+                </div>
+                <div class="col-md-6">
+                  <label class="small text-muted">เวลาออกจาก สสจ. (ถ้ามี)</label
+                  ><input
+                    type="time"
+                    id="depTime"
+                    name="depTime"
+                    class="form-control"
+                  />
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="small fw-bold text-primary"
+                  >ประเภทกิจกรรม (เลือกได้หลายข้อ)</label
+                >
+                <div id="chkActivities" class="row ms-1 mt-1"></div>
+              </div>
+              <div class="mb-3">
+                <label class="small fw-bold text-primary"
+                  >แหล่งประชาสัมพันธ์</label
+                >
+                <div id="chkPRChannels" class="row ms-1 mt-1"></div>
+              </div>
+              <div class="row g-2 mb-3 mt-1">
+                <div class="col-md-6">
+                  <label class="small fw-bold text-primary"
+                    >การรับสื่อส่งกลับ</label
+                  ><select
+                    name="delivery"
+                    id="ddDel"
+                    class="form-select"
+                    required
+                  ></select>
+                </div>
+              </div>
+              <div class="mb-4">
+                <label class="small fw-bold text-primary"
+                  >แนบไฟล์โครงการ (อัปโหลดใหม่จะทับไฟล์เดิม ไม่เกิน 5MB)</label
+                ><input
+                  type="file"
+                  id="fileUpload"
+                  class="form-control"
+                  accept=".pdf,.doc,.docx"
+                />
+              </div>
+              <button
+                type="submit"
+                class="btn btn-success w-100 py-3 fw-bold fs-5"
+                id="btnSubmitForm"
+              >
+                บันทึกส่งคำขอ
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="pdfTemplate"
+      class="hidden"
+      style="
+        padding: 30px;
+        background: white;
+        width: 800px;
+        color: black;
+        font-family: &quot;Sarabun&quot;;
+      "
+    >
+      <div style="text-align: center; margin-bottom: 20px">
+        <h3 style="margin: 0">แบบฟอร์มการขอใช้บริการ PR</h3>
+        <h4 style="margin: 0; color: gray">สำนักงานสาธารณสุขจังหวัดลพบุรี</h4>
+      </div>
+      <table
+        style="
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 20px;
+          font-size: 16px;
+        "
+      >
+        <tr>
+          <td width="30%">
+            <strong>เลขที่คำขอ:</strong> <span id="pdfReqId"></span>
+          </td>
+          <td width="70%">
+            <strong>สถานะ:</strong> <span id="pdfStatus"></span>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>ผู้ขอ:</strong> <span id="pdfName"></span></td>
+          <td><strong>กลุ่มงาน:</strong> <span id="pdfDept"></span></td>
+        </tr>
+      </table>
+      <div style="border: 1px solid #ccc; padding: 15px; border-radius: 8px">
+        <p><strong>โครงการ:</strong> <span id="pdfProj"></span></p>
+        <p>
+          <strong>วันที่จัด:</strong> <span id="pdfDate"></span>
+          <strong>เวลา:</strong> <span id="pdfTime"></span>
+        </p>
+        <p><strong>ยานพาหนะ:</strong> <span id="pdfVeh"></span></p>
+        <p><strong>ประเภทกิจกรรม:</strong> <span id="pdfActs"></span></p>
+        <p><strong>ช่องทาง PR:</strong> <span id="pdfPR"></span></p>
+        <p><strong>รับสื่อส่งกลับ:</strong> <span id="pdfDel"></span></p>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      // =====================================
+      const GAS_URL =
+        "https://script.google.com/macros/s/AKfycbx3mBMMfULPbGd7CU3fu2fgwn6i71hAe7ArRlu__uuq0Vxd8G4Sdg2PmvcTn92-HUiM/exec"; // แก้ URL
+      const LIFF_ID = "YOUR_LIFF_ID_HERE";
+      // =====================================
+
+      let currentUser = null;
+      let userRequestsData = [];
+      let currentLineUID = "";
+      let photographersList = [];
+      let globalApprovedEvents = []; // เก็บ Events สำหรับตรวจสอบคิว
+
+      async function api(action, data = {}) {
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action, data }),
+        });
+        return await res.json();
+      }
+
+      // 1. Initial Load & Render Calendar
+      window.onload = async () => {
+        try {
+          // โหลด Events สำหรับปฏิทินหน้าแรก
+          const evRes = await api("getApprovedEvents");
+          if (evRes.status === "success") {
+            globalApprovedEvents = evRes.data;
+
+            // สร้างปฏิทิน FullCalendar
+            const calendarEl = document.getElementById("calendar");
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+              initialView:
+                window.innerWidth < 768 ? "listMonth" : "dayGridMonth", // ถ้าจอมือถือให้แสดงแบบ List
+              locale: "th",
+              headerToolbar: {
+                left: "prev,next today",
+                center: "title",
+                right: "dayGridMonth,listMonth",
+              },
+              events: globalApprovedEvents,
+              eventClick: function (info) {
+                Swal.fire({
+                  title: "รายละเอียดคิวงาน",
+                  html: `<b>โครงการ:</b> ${info.event.extendedProps.projectName}<br><b>ผู้รับผิดชอบ:</b> ${info.event.extendedProps.assignedTo}<br><b>เวลา:</b> ${info.event.extendedProps.startStr} - ${info.event.extendedProps.endStr}`,
+                  icon: "info",
+                });
+              },
+            });
+            calendar.render();
+          }
+
+          // โหลด Dropdowns
+          const res = await api("getDropdowns");
+          if (res.status === "success") {
+            const fillDD = (id, arr) => {
+              let html =
+                '<option value="" disabled selected>-- เลือก --</option>';
+              arr.forEach(
+                (a) => (html += `<option value="${a}">${a}</option>`),
+              );
+              document.getElementById(id).innerHTML = html;
+            };
+            fillDD("ddPos", res.positions);
+            fillDD("ddDept", res.departments);
+            fillDD("ddVeh", res.vehicles);
+            fillDD("ddDel", res.deliveries);
+            photographersList = res.photographers || [];
+
+            let actHtml = "";
+            res.activities.forEach((a) => {
+              if (a === "อื่นๆ")
+                actHtml += `<div class="col-md-6 form-check"><input class="form-check-input chk-act" type="checkbox" value="อื่นๆ" onchange="document.getElementById('otherActTxt').classList.toggle('hidden', !this.checked)"><label class="form-check-label small">อื่นๆ</label><input type="text" id="otherActTxt" class="form-control form-control-sm mt-1 hidden" placeholder="โปรดระบุ"></div>`;
+              else
+                actHtml += `<div class="col-md-6 form-check"><input class="form-check-input chk-act" type="checkbox" value="${a}"><label class="form-check-label small">${a}</label></div>`;
+            });
+            document.getElementById("chkActivities").innerHTML = actHtml;
+
+            let prHtml = "";
+            res.prChannels.forEach((p) => {
+              prHtml += `<div class="col-md-4 form-check"><input class="form-check-input chk-pr" type="checkbox" value="${p}"><label class="form-check-label small">${p}</label></div>`;
+            });
+            document.getElementById("chkPRChannels").innerHTML = prHtml;
+          }
+
+          if (LIFF_ID && LIFF_ID !== "YOUR_LIFF_ID_HERE") {
+            await liff.init({ liffId: LIFF_ID });
+            if (liff.isLoggedIn())
+              currentLineUID = (await liff.getProfile()).userId;
+          }
+        } catch (e) {
+          console.error("Init Error", e);
+        }
+      };
+
+      function toggleAuth() {
+        document.getElementById("loginBox").classList.toggle("hidden");
+        document.getElementById("regBox").classList.toggle("hidden");
+      }
+
+      // ... (ฟังก์ชัน Login, Register, Dashboards เหมือนกับโค้ดก่อนหน้านี้) ...
+      async function loginWithLine() {
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+        Swal.fire({
+          title: "กำลังล็อกอิน...",
+          didOpen: () => Swal.showLoading(),
+        });
+        const res = await api("checkLineAuth", { uid: currentLineUID });
+        if (res.status === "success") processLoginSuccess(res.profile);
+        else {
+          Swal.fire("ข้อมูล", "ไม่พบบัญชีที่ผูกกับ LINE นี้", "info");
+          document.getElementById("lineBindAlert").classList.remove("hidden");
+        }
+      }
+      async function manualLogin() {
+        const user = document.getElementById("logUser").value,
+          pass = document.getElementById("logPass").value;
+        if (!user || !pass) return;
+        Swal.fire({
+          title: "กำลังตรวจสอบ...",
+          didOpen: () => Swal.showLoading(),
+        });
+        const res = await api("checkAuth", {
+          user,
+          pass,
+          lineUID: currentLineUID,
+        });
+        if (res.status === "success") processLoginSuccess(res.profile);
+        else Swal.fire("ล้มเหลว", res.message, "error");
+      }
+
+      function processLoginSuccess(profile) {
+        currentUser = profile;
+        document.getElementById("authSection").classList.add("hidden"); // ซ่อนปฏิทินและหน้าล็อกอิน
+        document.getElementById("mainNav").classList.remove("hidden");
+        document.getElementById("navUserName").innerText =
+          `คุณ ${currentUser.name} (${currentUser.role})`;
+        Swal.close();
+        currentUser.role === "Admin" ? loadAdminDash() : loadUserDash();
+      }
+
+      function logout() {
+        location.reload();
+      }
+
+      // --- User/Admin Dashboards (เหมือนเดิม) ---
+      function showUserDash() {
+        document.getElementById("reqFormSec").classList.add("hidden");
+        document.getElementById("userDash").classList.remove("hidden");
+        loadUserDash();
+      }
+
+      function showForm(editData = null) {
+        document.getElementById("userDash").classList.add("hidden");
+        document.getElementById("reqFormSec").classList.remove("hidden");
+        document.getElementById("serviceForm").reset();
+        if (document.getElementById("otherActTxt")) {
+          document.getElementById("otherActTxt").classList.add("hidden");
+          document.getElementById("otherActTxt").value = "";
+        }
+        if (editData) {
+          document.getElementById("formTitle").innerText =
+            "แก้ไขคำขอ: " + editData.RequestID;
+          document.getElementById("btnSubmitForm").innerText = "บันทึกการแก้ไข";
+          document
+            .getElementById("btnSubmitForm")
+            .classList.replace("btn-success", "btn-warning");
+          document.getElementById("editId").value = editData.RequestID;
+          document.getElementById("projectName").value = editData.ProjectName;
+          document.getElementById("eventDate").value = new Date(
+            editData.EventDate,
+          )
+            .toISOString()
+            .split("T")[0];
+          const fmtTime = (t) => {
+            if (!t) return "";
+            if (typeof t === "string" && t.includes(":"))
+              return t.substring(0, 5);
+            let d = new Date(t);
+            return (
+              (d.getHours() < 10 ? "0" : "") +
+              d.getHours() +
+              ":" +
+              (d.getMinutes() < 10 ? "0" : "") +
+              d.getMinutes()
+            );
+          };
+          document.getElementById("startTime").value = fmtTime(
+            editData.StartTime,
+          );
+          document.getElementById("endTime").value = fmtTime(editData.EndTime);
+          document.getElementById("depTime").value = fmtTime(editData.DepTime);
+          document.getElementById("ddVeh").value = editData.Vehicle;
+          document.getElementById("ddDel").value = editData.Delivery;
+          let acts = editData.Activities.split(", ");
+          document.querySelectorAll(".chk-act").forEach((c) => {
+            if (acts.includes(c.value)) c.checked = true;
+            let otherItem = acts.find((a) => a.startsWith("อื่นๆ"));
+            if (c.value === "อื่นๆ" && otherItem) {
+              c.checked = true;
+              document.getElementById("otherActTxt").classList.remove("hidden");
+              let match = otherItem.match(/\((.*?)\)/);
+              if (match)
+                document.getElementById("otherActTxt").value = match[1];
+            }
+          });
+          let prs = editData.PRChannels.split(", ");
+          document.querySelectorAll(".chk-pr").forEach((c) => {
+            if (prs.includes(c.value)) c.checked = true;
+          });
+        } else {
+          document.getElementById("formTitle").innerText = "สร้างคำขอใช้บริการ";
+          document.getElementById("btnSubmitForm").innerText = "บันทึกส่งคำขอ";
+          document
+            .getElementById("btnSubmitForm")
+            .classList.replace("btn-warning", "btn-success");
+          document.getElementById("editId").value = "";
+        }
+      }
+
+      async function loadUserDash() {
+        document.getElementById("userDash").classList.remove("hidden");
+        const res = await api("getUserRequests", {
+          username: currentUser.username,
+        });
+        userRequestsData = res.data;
+        let tbody = "";
+        res.data.reverse().forEach((r) => {
+          let badge =
+            r.Status === "อนุมัติแล้ว"
+              ? "bg-success"
+              : r.Status === "ยกเลิกแล้ว"
+                ? "bg-danger"
+                : "bg-warning text-dark";
+          let actBtns = `<button class="btn btn-sm btn-outline-primary" onclick="generatePDF('${r.RequestID}')">PDF</button> `;
+          if (r.Status === "รออนุมัติ") {
+            actBtns += `<button class="btn btn-sm btn-outline-warning ms-1" onclick="triggerEdit('${r.RequestID}')">แก้ไข</button> <button class="btn btn-sm btn-outline-danger ms-1" onclick="cancelReq('${r.RequestID}')">ยกเลิก</button>`;
+          }
+          tbody += `<tr><td><small>${r.RequestID}</small></td><td>${r.ProjectName}</td><td>${new Date(r.EventDate).toLocaleDateString("th-TH")}</td><td><span class="badge ${badge}">${r.Status}</span></td><td class="text-end">${actBtns}</td></tr>`;
+        });
+        document.getElementById("userTableBody").innerHTML = tbody;
+      }
+      function triggerEdit(id) {
+        const req = userRequestsData.find((r) => r.RequestID === id);
+        if (req) showForm(req);
+      }
+      async function cancelReq(id) {
+        if (confirm("ต้องการยกเลิกคำขอนี้ใช่หรือไม่?")) {
+          await api("cancelRequest", { id });
+          loadUserDash();
+        }
+      }
+
+      async function loadAdminDash() {
+        document.getElementById("adminDash").classList.remove("hidden");
+        const res = await api("getAllRequests");
+        let tbody = "";
+        res.data.reverse().forEach((r) => {
+          let badge =
+            r.Status === "อนุมัติแล้ว"
+              ? "bg-success"
+              : r.Status === "ยกเลิกแล้ว"
+                ? "bg-danger"
+                : "bg-warning text-dark";
+          let assignText = r.AssignedTo
+            ? `<br><small class="text-primary"><i class="bi bi-person"></i> ช่างภาพ: ${r.AssignedTo}</small>`
+            : "";
+          let actBtn =
+            r.Status === "รออนุมัติ"
+              ? `<button class="btn btn-sm btn-success me-1" onclick="promptApprove('${r.RequestID}')">อนุมัติ</button><button class="btn btn-sm btn-danger" onclick="updateStatus('${r.RequestID}', 'ไม่อนุมัติ')">ปฏิเสธ</button>`
+              : "-";
+          let fileBtn = r.FileLink
+            ? `<a href="${r.FileLink}" target="_blank" class="btn btn-sm btn-info text-white mt-1">ดูไฟล์</a>`
+            : "";
+          tbody += `<tr><td><small>${r.RequestID}</small></td><td>${r.FullName}<br><small class="text-muted">${r.Department}</small></td><td>${r.ProjectName}<br><small>${new Date(r.EventDate).toLocaleDateString("th-TH")}</small>${assignText}</td><td><small>${r.Activities}</small><br>${fileBtn}</td><td><span class="badge ${badge}">${r.Status}</span></td><td class="text-end">${actBtn}</td></tr>`;
+        });
+        document.getElementById("adminTableBody").innerHTML = tbody;
+      }
+
+      async function promptApprove(reqId) {
+        let options = {};
+        photographersList.forEach((p) => (options[p] = p));
+        const { value: photographer } = await Swal.fire({
+          title: "มอบหมายช่างภาพ",
+          input: "select",
+          inputOptions: options,
+          inputPlaceholder: "-- เลือกผู้รับผิดชอบ --",
+          showCancelButton: true,
+          confirmButtonText: "ยืนยันการอนุมัติ",
+          cancelButtonText: "ยกเลิก",
+          inputValidator: (val) => {
+            return new Promise((resolve) => {
+              if (val) resolve();
+              else resolve("กรุณาเลือกช่างภาพ!");
+            });
+          },
+        });
+        if (photographer) updateStatus(reqId, "อนุมัติแล้ว", photographer);
+      }
+
+      async function updateStatus(id, status, assignedTo = "") {
+        Swal.fire({
+          title: "กำลังดำเนินการ...",
+          didOpen: () => Swal.showLoading(),
+        });
+        await api("updateStatus", { id, status, assignedTo });
+        Swal.fire("เรียบร้อย", "อัปเดตสถานะสำเร็จ", "success");
+        loadAdminDash();
+      }
+
+      // ---------------- ระบบตรวจสอบเวลาซ้อน & บันทึกฟอร์ม ----------------
+      document
+        .getElementById("serviceForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          // ดึงค่าฟอร์ม
+          const reqDate = document.getElementById("eventDate").value;
+          const reqStart = document.getElementById("startTime").value;
+          const reqEnd = document.getElementById("endTime").value;
+
+          // ตรวจสอบคิวซ้อน (Conflict Checker)
+          let conflictMsg = "";
+          globalApprovedEvents.forEach((ev) => {
+            if (ev.dateStr === reqDate) {
+              // วันเดียวกัน
+              // เช็คเวลาเหลื่อมกัน (Start < EventEnd และ End > EventStart)
+              if (reqStart < ev.endStr && reqEnd > ev.startStr) {
+                conflictMsg += `<br><b class="text-danger">- ${ev.projectName} (${ev.startStr} - ${ev.endStr})</b>`;
+              }
+            }
+          });
+
+          if (conflictMsg !== "") {
+            const confirmConflict = await Swal.fire({
+              title: "แจ้งเตือน: เวลาซ้อนทับ!",
+              html: `มีคิวงานที่อนุมัติแล้วในช่วงเวลาที่คุณเลือก ดังนี้:${conflictMsg}<br><br><b>คุณต้องการยืนยันส่งคำขอเพื่อให้หัวหน้าพิจารณาใช่หรือไม่?</b>`,
+              icon: "warning",
+              showCancelButton: true,
+              confirmButtonColor: "#d33",
+              confirmButtonText: "ยืนยันส่งคำขอ",
+              cancelButtonText: "ยกเลิกแก้ไขเวลา",
+            });
+            if (!confirmConflict.isConfirmed) return; // ถ้ายกเลิก ให้หยุดการส่งฟอร์ม
+          }
+
+          // ผ่านการตรวจสอบ หรือ ยืนยันส่งต่อ เตรียม Payload
+          let acts = [];
+          document.querySelectorAll(".chk-act:checked").forEach((c) => {
+            acts.push(
+              c.value === "อื่นๆ"
+                ? `อื่นๆ (${document.getElementById("otherActTxt").value})`
+                : c.value,
+            );
+          });
+          let prs = [];
+          document
+            .querySelectorAll(".chk-pr:checked")
+            .forEach((c) => prs.push(c.value));
+          if (acts.length === 0 || prs.length === 0)
+            return Swal.fire(
+              "แจ้งเตือน",
+              "กรุณาเลือกกิจกรรมและช่องทาง PR",
+              "warning",
+            );
+
+          let payload = {
+            id: document.getElementById("editId").value,
+            username: currentUser.username,
+            fullName: currentUser.name,
+            department: currentUser.dept,
+            email: currentUser.email,
+            projectName: document.getElementById("projectName").value,
+            eventDate: reqDate,
+            startTime: reqStart,
+            endTime: reqEnd,
+            vehicle: document.getElementById("ddVeh").value,
+            depTime: document.getElementById("depTime").value,
+            activities: acts.join(", "),
+            prChannels: prs.join(", "),
+            delivery: document.getElementById("ddDel").value,
+          };
+
+          Swal.fire({
+            title: "กำลังบันทึกและแจ้งเตือนแอดมิน...",
+            didOpen: () => Swal.showLoading(),
+          });
+          const file = document.getElementById("fileUpload").files[0];
+          if (file) {
+            if (file.size > 5 * 1024 * 1024)
+              return Swal.fire("ผิดพลาด", "ไฟล์เกิน 5MB", "error");
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+              payload.fileData = {
+                filename: file.name,
+                mimeType: file.type,
+                bytes: e.target.result.split(",")[1],
+              };
+              await executeFormSend(payload);
+            };
+            reader.readAsDataURL(file);
+          } else {
+            await executeFormSend(payload);
+          }
+        });
+
+      async function executeFormSend(payload) {
+        const res = await api(
+          payload.id ? "updateRequest" : "submitRequest",
+          payload,
+        );
+        res.status === "success"
+          ? Swal.fire("สำเร็จ", "บันทึกข้อมูลเรียบร้อย", "success").then(() =>
+              showUserDash(),
+            )
+          : Swal.fire("ผิดพลาด", res.message, "error");
+      }
+
+      // PDF Export
+      function generatePDF(id) {
+        const req = userRequestsData.find((r) => r.RequestID === id);
+        if (!req) return;
+        document.getElementById("pdfReqId").innerText = req.RequestID;
+        document.getElementById("pdfStatus").innerText = req.Status;
+        document.getElementById("pdfName").innerText = req.FullName;
+        document.getElementById("pdfDept").innerText = req.Department;
+        document.getElementById("pdfProj").innerText = req.ProjectName;
+        document.getElementById("pdfDate").innerText = new Date(
+          req.EventDate,
+        ).toLocaleDateString("th-TH");
+        document.getElementById("pdfTime").innerText =
+          req.StartTime + " - " + req.EndTime + " น.";
+        document.getElementById("pdfVeh").innerText =
+          req.Vehicle + (req.DepTime ? ` (ออก ${req.DepTime} น.)` : "");
+        document.getElementById("pdfActs").innerText = req.Activities;
+        document.getElementById("pdfPR").innerText = req.PRChannels;
+        document.getElementById("pdfDel").innerText = req.Delivery;
+        const element = document.getElementById("pdfTemplate");
+        element.classList.remove("hidden");
+        html2pdf()
+          .set({
+            margin: 10,
+            filename: `PR_${id}.pdf`,
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+          })
+          .from(element)
+          .save()
+          .then(() => element.classList.add("hidden"));
+      }
+
+      // Register Form
+      document
+        .getElementById("regForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const data = Object.fromEntries(new FormData(this));
+          data.lineUID = currentLineUID;
+          Swal.fire({
+            title: "กำลังบันทึก...",
+            didOpen: () => Swal.showLoading(),
+          });
+          const res = await api("registerUser", data);
+          res.status === "success"
+            ? Swal.fire("สำเร็จ", res.message, "success").then(toggleAuth)
+            : Swal.fire("ผิดพลาด", res.message, "error");
+        });
+    </script>
+  </body>
+</html>
