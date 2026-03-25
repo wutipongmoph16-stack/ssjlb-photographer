@@ -730,6 +730,56 @@
       </div>
     </div>
 
+    <!-- ------------------ Start modal Preview -------------------- -->
+
+    <div
+      class="modal fade"
+      id="pdfPreviewModal"
+      tabindex="-1"
+      aria-labelledby="pdfPreviewModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-main text-white py-2">
+            <h5 class="modal-title" id="pdfPreviewModalLabel">
+              <i class="bi bi-file-earmark-pdf"></i> ตัวอย่างเอกสาร (Preview)
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div
+            class="modal-body p-0"
+            style="height: 80vh; background-color: #525659"
+          >
+            <iframe
+              id="pdfPreviewFrame"
+              style="width: 100%; height: 100%; border: none"
+            ></iframe>
+          </div>
+          <div class="modal-footer py-1">
+            <span class="text-muted small me-auto"
+              >* คุณสามารถกดปุ่ม <b>ดาวน์โหลด</b> หรือ
+              <b>ปริ้น</b> จากแถบเครื่องมือด้านบนของเอกสารได้เลย</span
+            >
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              ปิด
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- -------------- End Modal Preview ------------------- -->
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
@@ -1254,6 +1304,7 @@
       }
 
       // --- PDF EXPORT (ฟอร์มราชการ จัดหน้าเป๊ะ) ---
+      // --- PDF EXPORT (Preview ก่อนปริ้น/ดาวน์โหลด) ---
       function generatePDF(id) {
         let req;
         if (typeof mockRequests !== "undefined")
@@ -1265,7 +1316,14 @@
 
         if (!req) return;
 
-        const checkedIcon = "☑"; // ใช้สัญลักษณ์ติ๊กถูก
+        // แจ้งเตือนกำลังสร้างตัวอย่าง
+        Swal.fire({
+          title: "กำลังสร้างตัวอย่างเอกสาร...",
+          text: "กรุณารอสักครู่",
+          didOpen: () => Swal.showLoading(),
+        });
+
+        const checkedIcon = "☑";
         const uncheckIcon = "☐";
 
         // 1. ล้างค่า Checkbox ให้เป็นช่องว่างก่อน
@@ -1276,7 +1334,6 @@
         // 2. เติมข้อมูลทั่วไป
         document.getElementById("pdfReqId").innerText = req.RequestID;
 
-        // แปลงวันที่ให้อ่านง่าย เช่น 25 มีนาคม 2569
         const dObj = new Date(req.EventDate);
         const dateStr = dObj.toLocaleDateString("th-TH", {
           day: "numeric",
@@ -1296,7 +1353,7 @@
         document.getElementById("pdfStartTime").innerText = req.StartTime;
         document.getElementById("pdfEndTime").innerText = req.EndTime;
 
-        // 3. ยานพาหนะ [cite: 14, 16]
+        // 3. ยานพาหนะ
         if (req.Vehicle.includes("ส่วนตัว"))
           document.getElementById("chkVehPrivate").innerHTML = checkedIcon;
         if (req.Vehicle.includes("สสจ.")) {
@@ -1306,7 +1363,7 @@
           document.getElementById("pdfDepTime").innerText = "";
         }
 
-        // 4. ประเภทกิจกรรม [cite: 19, 22, 23, 32]
+        // 4. ประเภทกิจกรรม
         let act = req.Activities || "";
         if (act.includes("กิจกรรม") || act.includes("อุปกรณ์"))
           document.getElementById("chkAct1").innerHTML = checkedIcon;
@@ -1331,13 +1388,12 @@
 
           let otherMatch = act.match(/อื่นๆ \((.*?)\)/);
           if (otherMatch) others.push(otherMatch[1]);
-
           document.getElementById("pdfOtherAct").innerText = others.join(", ");
         } else {
           document.getElementById("pdfOtherAct").innerText = "";
         }
 
-        // 5. ประชาสัมพันธ์ [cite: 33, 34]
+        // 5. ประชาสัมพันธ์
         if (
           act.includes("Infographic") ||
           (req.PRChannels && req.PRChannels.includes("Facebook"))
@@ -1345,7 +1401,7 @@
           document.getElementById("chkPR").innerHTML = checkedIcon;
         }
 
-        // 6. การส่งผลงาน [cite: 29, 30]
+        // 6. การส่งผลงาน
         let del = req.Delivery || "";
         if (del.toLowerCase().includes("e-mail") || del.includes("อีเมล"))
           document.getElementById("chkDel1").innerHTML = checkedIcon;
@@ -1362,32 +1418,50 @@
           document.getElementById("pdfDelOther").innerText = "";
         }
 
-        // 7. ลายเซ็นต์ และการมอบหมาย [cite: 42, 43, 46]
+        // 7. ลายเซ็นต์ และการมอบหมาย
         document.getElementById("pdfSignName").innerText = req.FullName;
         document.getElementById("pdfAssignName").innerText =
           req.AssignedTo || "";
 
-        // เตรียม PDF
+        // ------------------------------------------------------------------
+        // แปลงเป็น PDF แบบ Preview (ไม่ดาวน์โหลดอัตโนมัติ)
+        // ------------------------------------------------------------------
         const element = document.getElementById("pdfTemplate");
-        element.parentElement.classList.remove("d-none"); // แสดงชั่วคราว
+        element.parentElement.classList.remove("d-none"); // แสดงชั่วคราวเพื่อให้จับภาพได้
 
         const opt = {
           margin: 0,
           filename: `แบบฟอร์ม_PR_${req.RequestID}.pdf`,
           image: { type: "jpeg", quality: 1 },
-          html2canvas: { scale: 2, useCORS: true, windowWidth: 800 }, // ล็อคขนาดไม่ให้เพี้ยนตามจอ
+          html2canvas: { scale: 2, useCORS: true, windowWidth: 800 },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         };
 
-        // สร้าง PDF
+        // ใช้คำสั่ง outputPdf('bloburl') เพื่อสร้าง URL จำลอง แล้วส่งเข้า iframe
         html2pdf()
           .set(opt)
           .from(element)
-          .save()
-          .then(() => {
-            element.parentElement.classList.add("d-none"); // ซ่อนกลับเมื่อเสร็จสิ้น
+          .outputPdf("bloburl")
+          .then((pdfUrl) => {
+            element.parentElement.classList.add("d-none"); // ซ่อน Template ทิ้งเหมือนเดิม
+
+            // ส่ง URL ไปเปิดใน iframe ของ Modal
+            document.getElementById("pdfPreviewFrame").src = pdfUrl;
+
+            Swal.close(); // ปิดแจ้งเตือนโหลด
+
+            // เรียกเปิด Modal ของ Bootstrap ขึ้นมา
+            const previewModal = new bootstrap.Modal(
+              document.getElementById("pdfPreviewModal"),
+            );
+            previewModal.show();
+          })
+          .catch((err) => {
+            Swal.fire("ข้อผิดพลาด", "ไม่สามารถสร้างตัวอย่าง PDF ได้", "error");
+            element.parentElement.classList.add("d-none");
           });
       }
+      // end GeneratePDF
 
       // Register Form
       document
