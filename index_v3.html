@@ -208,33 +208,64 @@
 
       <div id="adminDash" class="hidden fade-in">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h4 class="fw-bold text-teal">
-            <i class="bi bi-clipboard-check"></i> จัดการคำขอ (สำหรับผู้ดูแลระบบ)
+          <h4 class="mb-0 fw-bold text-teal">
+            <i class="bi bi-clipboard-check"></i> จัดการคำขอ (Admin)
           </h4>
-          <button
-            class="btn btn-sm btn-outline-info shadow-sm"
-            onclick="testCalendarConnection()"
-          >
-            <i class="bi bi-calendar-check"></i> ทดสอบเชื่อมต่อปฏิทิน
-          </button>
+          <div>
+            <button
+              class="btn btn-sm btn-outline-info shadow-sm me-1"
+              onclick="testCalendarConnection()"
+            >
+              <i class="bi bi-calendar-check"></i> เช็คปฏิทิน
+            </button>
+            <button
+              class="btn btn-sm btn-outline-primary shadow-sm"
+              onclick="refreshAdmin()"
+            >
+              <i class="bi bi-arrow-clockwise"></i> รีเฟรช
+            </button>
+          </div>
         </div>
-        <div class="card p-3 table-responsive">
+
+        <div class="row mb-3">
+          <div class="col-md-5">
+            <div class="input-group input-group-sm shadow-sm">
+              <span class="input-group-text bg-white text-teal"
+                ><i class="bi bi-search"></i
+              ></span>
+              <input
+                type="text"
+                id="adminSearch"
+                class="form-control"
+                placeholder="ค้นหา: โครงการ, ชื่อผู้ขอ, สถานะ, รหัส..."
+                onkeyup="searchAdmin()"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="card p-3 table-responsive shadow-sm">
           <table
             class="table table-hover align-middle"
-            style="font-size: 0.9rem"
+            style="font-size: 0.95rem"
           >
-            <thead>
+            <thead class="table-light">
               <tr>
                 <th>รหัสคำขอ</th>
                 <th>ผู้ขอ</th>
                 <th>โครงการ</th>
-                <th>กิจกรรม</th>
+                <th>รายละเอียด</th>
                 <th>สถานะ</th>
-                <th class="text-end">จัดการ</th>
+                <th class="text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody id="adminTableBody"></tbody>
           </table>
+
+          <div
+            id="adminPagination"
+            class="d-flex justify-content-center mt-3"
+          ></div>
         </div>
       </div>
 
@@ -666,30 +697,129 @@
         }
       }
 
+      // =========================================================
+      // ระบบ Admin Dashboard (โหลด, ค้นหา, แบ่งหน้า, รีเฟรช)
+      // =========================================================
+      let allRequestsData = []; // ตัวแปรเก็บข้อมูลทั้งหมด
+      let currentAdminPage = 1; // หน้าปัจจุบัน
+      const adminItemsPerPage = 10; // จำนวนรายการต่อหน้า (เปลี่ยนตัวเลขได้)
+
+      // 1. ฟังก์ชันโหลดข้อมูลจาก Server (ครั้งแรก หรือเวลากดรีเฟรช)
       async function loadAdminDash() {
         document.getElementById("adminDash").classList.remove("hidden");
         const res = await api("getAllRequests");
-        let tbody = "";
-        res.data.reverse().forEach((r) => {
-          let badge =
-            r.Status === "อนุมัติแล้ว"
-              ? "bg-success"
-              : r.Status === "ยกเลิกแล้ว"
-                ? "bg-danger"
-                : "bg-warning text-dark";
-          let assignText = r.AssignedTo
-            ? `<br><small class="text-primary"><i class="bi bi-person"></i> ช่างภาพ: ${r.AssignedTo}</small>`
-            : "";
-          let actBtn =
-            r.Status === "รออนุมัติ"
-              ? `<button class="btn btn-sm btn-success me-1" onclick="promptApprove('${r.RequestID}')">อนุมัติ</button><button class="btn btn-sm btn-danger" onclick="updateStatus('${r.RequestID}', 'ไม่อนุมัติ')">ปฏิเสธ</button>`
-              : "-";
-          let fileBtn = r.FileLink
-            ? `<a href="${r.FileLink}" target="_blank" class="btn btn-sm btn-info text-white mt-1">ดูไฟล์</a>`
-            : "";
-          tbody += `<tr><td><small>${r.RequestID}</small></td><td>${r.FullName}<br><small class="text-muted">${r.Department}</small></td><td>${r.ProjectName}<br><small>${new Date(r.EventDate).toLocaleDateString("th-TH")}</small>${assignText}</td><td><small>${r.Activities}</small><br>${fileBtn}</td><td><span class="badge ${badge}">${r.Status}</span></td><td class="text-end">${actBtn}</td></tr>`;
+        if (res.status === "success") {
+          allRequestsData = res.data.reverse(); // เรียงจากใหม่สุดไปเก่าสุด
+          currentAdminPage = 1; // รีเซ็ตกลับไปหน้า 1
+          document.getElementById("adminSearch").value = ""; // ล้างช่องค้นหา
+          renderAdminTable(); // สั่งวาดตาราง
+        }
+      }
+
+      // 2. ฟังก์ชันปุ่มรีเฟรช
+      async function refreshAdmin() {
+        Swal.fire({
+          title: "กำลังโหลดข้อมูลใหม่...",
+          didOpen: () => Swal.showLoading(),
         });
+        await loadAdminDash();
+        Swal.close();
+      }
+
+      // 3. ฟังก์ชันเมื่อพิมพ์ช่องค้นหา
+      function searchAdmin() {
+        currentAdminPage = 1; // เมื่อค้นหาให้กลับไปเริ่มที่หน้า 1
+        renderAdminTable();
+      }
+
+      // 4. ฟังก์ชันวาดตารางและจัดการ Pagination
+      function renderAdminTable() {
+        const keyword = document
+          .getElementById("adminSearch")
+          .value.toLowerCase();
+
+        // กรองข้อมูลตามคำค้นหา (ค้นหาจาก โปรเจค, ชื่อ, สถานะ, หรือรหัสคำขอ)
+        const filteredData = allRequestsData.filter((r) => {
+          return (
+            r.ProjectName.toLowerCase().includes(keyword) ||
+            r.FullName.toLowerCase().includes(keyword) ||
+            r.Status.toLowerCase().includes(keyword) ||
+            r.RequestID.toLowerCase().includes(keyword)
+          );
+        });
+
+        // คำนวณการแบ่งหน้า
+        const totalPages =
+          Math.ceil(filteredData.length / adminItemsPerPage) || 1;
+        if (currentAdminPage > totalPages) currentAdminPage = totalPages;
+
+        const startIndex = (currentAdminPage - 1) * adminItemsPerPage;
+        const endIndex = startIndex + adminItemsPerPage;
+        const pageData = filteredData.slice(startIndex, endIndex); // ตัดเอาเฉพาะข้อมูลในหน้าปัจจุบัน
+
+        // วาดเนื้อหาลงตาราง
+        let tbody = "";
+        if (pageData.length === 0) {
+          tbody = `<tr><td colspan="6" class="text-center text-muted py-4"><i class="bi bi-search"></i> ไม่พบข้อมูลที่ค้นหา</td></tr>`;
+        } else {
+          pageData.forEach((r) => {
+            let badge =
+              r.Status === "อนุมัติแล้ว"
+                ? "bg-success"
+                : r.Status === "ยกเลิกแล้ว"
+                  ? "bg-danger"
+                  : "bg-warning text-dark";
+            let assignText = r.AssignedTo
+              ? `<br><small class="text-primary"><i class="bi bi-person-check-fill"></i> ${r.AssignedTo}</small>`
+              : "";
+
+            // ถ้าสถานะรออนุมัติ จะแสดงปุ่มอนุมัติ/ปฏิเสธ ถ้าสถานะอื่นจะแสดงปุ่มปริ้น PDF
+            let actBtn =
+              r.Status === "รออนุมัติ"
+                ? `<button class="btn btn-sm btn-success w-100 mb-1" onclick="promptApprove('${r.RequestID}')">อนุมัติ</button><br>
+           <button class="btn btn-sm btn-danger w-100" onclick="updateStatus('${r.RequestID}', 'ไม่อนุมัติ')">ปฏิเสธ</button>`
+                : `<button class="btn btn-sm btn-outline-secondary w-100" onclick="generatePDF('${r.RequestID}')"><i class="bi bi-printer"></i> PDF</button>`;
+
+            let fileBtn = r.FileLink
+              ? `<a href="${r.FileLink}" target="_blank" class="btn btn-sm btn-info text-white mt-1">ดูไฟล์</a>`
+              : "";
+
+            tbody += `<tr>
+          <td><span class="badge bg-secondary">${r.RequestID}</span></td>
+          <td><b>${r.FullName}</b><br><small class="text-muted">${r.Department}</small></td>
+          <td><b>${r.ProjectName}</b><br><small><i class="bi bi-calendar"></i> ${new Date(r.EventDate).toLocaleDateString("th-TH")} (${r.StartTime}-${r.EndTime} น.)</small>${assignText}</td>
+          <td><small class="text-muted">${r.Activities}</small><br>${fileBtn}</td>
+          <td><span class="badge ${badge}">${r.Status}</span></td>
+          <td class="text-center" style="width: 100px;">${actBtn}</td>
+        </tr>`;
+          });
+        }
         document.getElementById("adminTableBody").innerHTML = tbody;
+
+        // วาดปุ่มเลื่อนหน้า (Pagination Controls)
+        renderPaginationControls(totalPages);
+      }
+
+      // 5. ฟังก์ชันสร้างปุ่มเปลี่ยนหน้า
+      function renderPaginationControls(totalPages) {
+        let html = "";
+
+        // ปุ่มย้อนกลับ
+        html += `<button class="btn btn-sm btn-outline-teal me-2" ${currentAdminPage === 1 ? "disabled" : ""} onclick="changeAdminPage(${currentAdminPage - 1})"><i class="bi bi-chevron-left"></i> ก่อนหน้า</button>`;
+
+        // แสดงข้อความเลขหน้า
+        html += `<span class="align-self-center mx-2 small text-muted fw-bold">หน้า ${currentAdminPage} จาก ${totalPages}</span>`;
+
+        // ปุ่มถัดไป
+        html += `<button class="btn btn-sm btn-outline-teal ms-2" ${currentAdminPage === totalPages ? "disabled" : ""} onclick="changeAdminPage(${currentAdminPage + 1})">ถัดไป <i class="bi bi-chevron-right"></i></button>`;
+
+        document.getElementById("adminPagination").innerHTML = html;
+      }
+
+      // 6. ฟังก์ชันเมื่อกดเปลี่ยนหน้า
+      function changeAdminPage(newPage) {
+        currentAdminPage = newPage;
+        renderAdminTable(); // วาดตารางใหม่ด้วยข้อมูลหน้าใหม่
       }
 
       async function promptApprove(reqId) {
