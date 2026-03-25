@@ -389,28 +389,32 @@
       </div>
     </div>
 
-    <div class="d-none">
+    <!-- ----------------------  Start PDF Template ---------------------- -->
+    <div
+      id="pdfContainer"
+      style="position: absolute; top: -9999px; left: -9999px; width: 800px"
+    >
       <div
         id="pdfTemplate"
         style="
-          width: 210mm;
-          min-height: 297mm;
-          padding: 20mm 25mm 20mm 25mm;
+          width: 800px;
+          padding: 40px 50px;
           background: white;
           color: black;
           font-family: &quot;Sarabun&quot;, sans-serif;
-          font-size: 15pt;
+          font-size: 15px;
           line-height: 1.6;
           box-sizing: border-box;
           position: relative;
+          min-height: 1120px;
         "
       >
         <div
           style="
             text-align: center;
             font-weight: bold;
-            margin-bottom: 25px;
-            font-size: 16pt;
+            margin-bottom: 20px;
+            font-size: 16px;
             line-height: 1.4;
           "
         >
@@ -420,27 +424,31 @@
           สำนักงานสาธารณสุขจังหวัดลพบุรี
         </div>
 
-        <div style="text-align: right; margin-bottom: 15px">
+        <div style="text-align: center; margin-bottom: 15px">
+          *******************************
+        </div>
+
+        <div style="text-align: right; margin-bottom: 10px">
           วันที่
           <span
             id="pdfDateTop"
             style="
               border-bottom: 1px dotted #000;
               display: inline-block;
-              width: 180px;
+              width: 150px;
               text-align: center;
             "
           ></span>
         </div>
 
         <div style="margin-bottom: 5px">
-          <span style="display: inline-block; width: 60px">ข้าพเจ้า</span>
+          ข้าพเจ้า
           <span
             id="pdfName"
             style="
               border-bottom: 1px dotted #000;
               display: inline-block;
-              width: 260px;
+              width: 250px;
               text-align: center;
             "
           ></span>
@@ -450,19 +458,19 @@
             style="
               border-bottom: 1px dotted #000;
               display: inline-block;
-              width: 200px;
+              width: 220px;
               text-align: center;
             "
           ></span>
         </div>
         <div style="margin-bottom: 5px">
-          <span style="display: inline-block; width: 60px">กลุ่มงาน</span>
+          กลุ่มงาน
           <span
             id="pdfDept"
             style="
               border-bottom: 1px dotted #000;
               display: inline-block;
-              width: 260px;
+              width: 250px;
               text-align: center;
             "
           ></span>
@@ -485,7 +493,7 @@
             style="
               border-bottom: 1px dotted #000;
               display: inline-block;
-              width: 440px;
+              width: 540px;
               text-align: center;
             "
           ></span>
@@ -534,11 +542,11 @@
           >
         </div>
 
-        <div style="margin-bottom: 5px">
+        <div style="margin-bottom: 5px; margin-left: 20px">
           <span class="pdf-chk" id="chkVehPrivate">☐</span> โดยมียานพาหนะ
           รถส่วนตัวเจ้าของกิจกรรม/โครงการ
         </div>
-        <div style="margin-bottom: 15px">
+        <div style="margin-bottom: 15px; margin-left: 20px">
           <span class="pdf-chk" id="chkVehOffice">☐</span> รถของ สสจ. ออกจาก
           สสจ. เวลา
           <span
@@ -546,7 +554,7 @@
             style="
               border-bottom: 1px dotted #000;
               display: inline-block;
-              width: 100px;
+              width: 80px;
               text-align: center;
             "
           ></span>
@@ -556,44 +564,44 @@
         <div style="margin-bottom: 5px">
           <b>มีความประสงค์จะขอความอนุเคราะห์ดังนี้</b>
         </div>
-        <div style="margin-bottom: 5px">
-          <span class="pdf-chk" id="chkAct1">☐</span> ถ่ายภาพกิจกรรม/โครงการ
-          ถ่ายภาพอุปกรณ์ต่าง ๆ
-        </div>
-        <div style="margin-bottom: 5px">
-          <span class="pdf-chk" id="chkAct2">☐</span> ถ่ายภาพบุคคล
-        </div>
-        <div style="margin-bottom: 5px">
-          <span class="pdf-chk" id="chkAct3">☐</span> ถ่ายภาพสถานที่
-        </div>
-        <div style="margin-bottom: 5px">
-          <span class="pdf-chk" id="chkAct4">☐</span> ถ่ายวีดีโอและตัดต่อ
-          บันทึกเสียง Live Streaming อื่นๆ
-          <span
-            id="pdfOtherAct"
-            style="
-              border-bottom: 1px dotted #000;
-              display: inline-block;
-              width: 150px;
-              text-align: center;
-            "
-          ></span>
-        </div>
-        <div style="margin-bottom: 10px">
-          <span class="pdf-chk" id="chkPR">☐</span> หลังจากดำเนินการเสร็จสิ้น
-          ขอให้จัดทำ Infographic อื่นๆ
-          และประชาสัมพันธ์กิจกรรม/ส่งผลการดำเนินงานผ่าน Facebook page :
-          สำนักงานสาธารณสุขจังหวัดลพบุรี
+        <div style="margin-left: 20px">
+          <div style="margin-bottom: 5px">
+            <span class="pdf-chk" id="chkAct1">☐</span> ถ่ายภาพกิจกรรม/โครงการ
+            ถ่ายภาพอุปกรณ์ต่าง ๆ
+          </div>
+          <div style="margin-bottom: 5px">
+            <span class="pdf-chk" id="chkAct2">☐</span> ถ่ายภาพบุคคล
+          </div>
+          <div style="margin-bottom: 5px">
+            <span class="pdf-chk" id="chkAct3">☐</span> ถ่ายภาพสถานที่
+          </div>
+          <div style="margin-bottom: 5px">
+            <span class="pdf-chk" id="chkAct4">☐</span> ถ่ายวีดีโอและตัดต่อ
+            บันทึกเสียง Live Streaming อื่นๆ.....
+            <span
+              id="pdfOtherAct"
+              style="
+                border-bottom: 1px dotted #000;
+                display: inline-block;
+                width: 150px;
+                text-align: center;
+              "
+            ></span>
+          </div>
+          <div style="margin-bottom: 10px">
+            <span class="pdf-chk" id="chkPR">☐</span> หลังจากดำเนินการเสร็จสิ้น
+            ขอให้จัดทำ Infographic อื่นๆ <br />
+            <span style="display: inline-block; margin-left: 20px"
+              >และประชาสัมพันธ์กิจกรรม/ส่งผลการดำเนินงานผ่าน Facebook page :
+              สำนักงานสาธารณสุขจังหวัดลพบุรี</span
+            >
+          </div>
         </div>
 
-        <div style="margin-bottom: 15px; display: flex; align-items: center">
-          <span style="margin-right: 15px">การรับสื่อส่งกลับ:</span>
-          <span class="pdf-chk" id="chkDel1" style="margin-right: 5px">☐</span>
-          <span style="margin-right: 15px">E-mail</span>
-          <span class="pdf-chk" id="chkDel2" style="margin-right: 5px">☐</span>
-          <span style="margin-right: 15px">Line</span>
-          <span class="pdf-chk" id="chkDel3" style="margin-right: 5px">☐</span>
-          <span style="margin-right: 5px">อื่นๆ</span>
+        <div style="margin-bottom: 15px; margin-left: 20px">
+          <span class="pdf-chk" id="chkDel1">☐</span> E-mail &nbsp;&nbsp;&nbsp;
+          <span class="pdf-chk" id="chkDel2">☐</span> Line. &nbsp;&nbsp;&nbsp;
+          <span class="pdf-chk" id="chkDel3">☐</span> อื่นๆ
           <span
             id="pdfDelOther"
             style="
@@ -606,12 +614,12 @@
         </div>
 
         <div style="margin-bottom: 25px; line-height: 1.4">
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ขอให้ผู้เกี่ยวข้อง
+          ขอให้ผู้เกี่ยวข้อง
           แนบโครงการ/คำกล่าวเปิด/กำหนดการจัดกิจกรรม/ข้อมูลที่ต้องการประชาสัมพันธ์
-          มาด้วย โดยแนบเป็นเอกสารมาพร้อมแบบฟอร์มนี้ แนบไฟล์มาที่
-          prlb@moph.go.th<br />
-          <b><u>หมายเหตุ</u></b> กลุ่มงานพัฒนายุทธศาสตร์สาธารณสุข
-          พิจารณาจัดลำดับการปฏิบัติงานของเจ้าหน้าที่ตามใบขอใช้บริการที่ได้รับการอนุมัติ
+          มาด้วย โดย<br />
+          แนบเป็นเอกสารมาพร้อมแบบฟอร์มนี้ แนบไฟล์มาที่ prlb@moph.go.th<br />
+          <b>หมายเหตุ</b> กลุ่มงานพัฒนายุทธศาสตร์สาธารณสุข
+          พิจารณาจัดลำดับการปฏิบัติงานของเจ้าหน้าที่ตามใบขอใช้บริการที่ได้รับการอนุมัติ<br />
           และขอสงวนสิทธิ์งดให้บริการ
           ในกรณีที่อัตรากำลังเจ้าหน้าที่ไม่เพียงพอหรือติดภารกิจอื่น
         </div>
@@ -619,20 +627,15 @@
         <table
           style="
             width: 100%;
-            font-size: 14pt;
+            font-size: 15px;
             border-collapse: collapse;
             line-height: 1.6;
+            margin-top: 10px;
           "
         >
           <tr>
             <td style="width: 50%; vertical-align: top; padding-right: 15px">
-              <div
-                style="
-                  text-decoration: underline;
-                  font-weight: bold;
-                  margin-bottom: 15px;
-                "
-              >
+              <div style="font-weight: bold; margin-bottom: 15px">
                 สำหรับผู้ขอใช้บริการ
               </div>
               <div style="text-align: center; margin-bottom: 30px">
@@ -651,13 +654,7 @@
                 วันที่ ........./........./.........
               </div>
 
-              <div
-                style="
-                  text-decoration: underline;
-                  font-weight: bold;
-                  margin-bottom: 15px;
-                "
-              >
+              <div style="font-weight: bold; margin-bottom: 15px">
                 สำหรับผู้ให้บริการ/ผู้ปฏิบัติงาน
               </div>
               <div><span class="pdf-chk-admin">☐</span> อนุมัติ เห็นควร</div>
@@ -678,13 +675,7 @@
               </div>
             </td>
             <td style="width: 50%; vertical-align: top; padding-left: 15px">
-              <div
-                style="
-                  text-decoration: underline;
-                  font-weight: bold;
-                  margin-bottom: 15px;
-                "
-              >
+              <div style="font-weight: bold; margin-bottom: 15px">
                 สำหรับเจ้าหน้าที่
               </div>
               <div style="margin-bottom: 15px">
@@ -700,7 +691,7 @@
                 ></span>
                 ดำเนินการ
               </div>
-              <div style="text-align: center; margin-bottom: 70px">
+              <div style="text-align: center; margin-bottom: 50px">
                 ลงชื่อ .....................................................<br />
                 ( ..................................................... )<br />
                 วันที่ ........./........./.........
@@ -719,9 +710,9 @@
         <div
           style="
             position: absolute;
-            bottom: 15mm;
-            right: 20mm;
-            font-size: 10pt;
+            bottom: 10px;
+            right: 20px;
+            font-size: 10px;
             color: gray;
           "
         >
@@ -729,6 +720,8 @@
         </div>
       </div>
     </div>
+
+    <!-- ----------------------  End PDF Template ------------------------ -->
 
     <!-- ------------------ Start modal Preview -------------------- -->
 
@@ -1305,18 +1298,27 @@
 
       // --- PDF EXPORT (ฟอร์มราชการ จัดหน้าเป๊ะ) ---
       // --- PDF EXPORT (Preview ก่อนปริ้น/ดาวน์โหลด) ---
+      // --- PDF EXPORT (ฟอร์มราชการ Preview) ---
       function generatePDF(id) {
-        let req;
-        if (typeof mockRequests !== "undefined")
-          req = mockRequests.find((r) => r.RequestID === id);
-        else if (typeof userRequestsData !== "undefined")
-          req = userRequestsData.find((r) => r.RequestID === id);
-        else if (typeof allRequestsData !== "undefined")
+        let req = null;
+
+        // ค้นหาข้อมูลจากทุกหน้าต่าง เพื่อแก้ปัญหาปุ่มนิ่งเงียบ
+        if (typeof allRequestsData !== "undefined" && allRequestsData) {
           req = allRequestsData.find((r) => r.RequestID === id);
+        }
+        if (
+          !req &&
+          typeof userRequestsData !== "undefined" &&
+          userRequestsData
+        ) {
+          req = userRequestsData.find((r) => r.RequestID === id);
+        }
 
-        if (!req) return;
+        if (!req) {
+          Swal.fire("ข้อผิดพลาด", "ไม่พบข้อมูลคำขอนี้ในระบบ", "error");
+          return;
+        }
 
-        // แจ้งเตือนกำลังสร้างตัวอย่าง
         Swal.fire({
           title: "กำลังสร้างตัวอย่างเอกสาร...",
           text: "กรุณารอสักครู่",
@@ -1326,6 +1328,23 @@
         const checkedIcon = "☑";
         const uncheckIcon = "☐";
 
+        // ฟังก์ชันช่วยแปลงเวลาให้เป็น HH:mm ป้องกันปัญหา 30025:16:56Z
+        const formatPdfTime = (t) => {
+          if (!t) return "";
+          if (typeof t === "string" && t.includes("T"))
+            return t.split("T")[1].substring(0, 5);
+          if (typeof t === "string" && t.includes(":"))
+            return t.substring(0, 5);
+          let d = new Date(t);
+          if (!isNaN(d.getTime()))
+            return (
+              d.getHours().toString().padStart(2, "0") +
+              ":" +
+              d.getMinutes().toString().padStart(2, "0")
+            );
+          return t;
+        };
+
         // 1. ล้างค่า Checkbox ให้เป็นช่องว่างก่อน
         document
           .querySelectorAll(".pdf-chk")
@@ -1334,7 +1353,8 @@
         // 2. เติมข้อมูลทั่วไป
         document.getElementById("pdfReqId").innerText = req.RequestID;
 
-        const dObj = new Date(req.EventDate);
+        let dObj = new Date(req.EventDate);
+        if (isNaN(dObj.getTime())) dObj = new Date(); // กันเหนียวกรณีวันที่ Error
         const dateStr = dObj.toLocaleDateString("th-TH", {
           day: "numeric",
           month: "long",
@@ -1350,15 +1370,22 @@
         document.getElementById("pdfPhone").innerText = req.Phone || "-";
         document.getElementById("pdfProj").innerText = req.ProjectName;
         document.getElementById("pdfDate").innerText = dateStr;
-        document.getElementById("pdfStartTime").innerText = req.StartTime;
-        document.getElementById("pdfEndTime").innerText = req.EndTime;
+
+        document.getElementById("pdfStartTime").innerText = formatPdfTime(
+          req.StartTime,
+        );
+        document.getElementById("pdfEndTime").innerText = formatPdfTime(
+          req.EndTime,
+        );
 
         // 3. ยานพาหนะ
-        if (req.Vehicle.includes("ส่วนตัว"))
+        let veh = req.Vehicle || "";
+        if (veh.includes("ส่วนตัว"))
           document.getElementById("chkVehPrivate").innerHTML = checkedIcon;
-        if (req.Vehicle.includes("สสจ.")) {
+        if (veh.includes("สสจ.")) {
           document.getElementById("chkVehOffice").innerHTML = checkedIcon;
-          document.getElementById("pdfDepTime").innerText = req.DepTime || "-";
+          document.getElementById("pdfDepTime").innerText =
+            formatPdfTime(req.DepTime) || "-";
         } else {
           document.getElementById("pdfDepTime").innerText = "";
         }
@@ -1394,9 +1421,11 @@
         }
 
         // 5. ประชาสัมพันธ์
+        let pr = req.PRChannels || "";
         if (
           act.includes("Infographic") ||
-          (req.PRChannels && req.PRChannels.includes("Facebook"))
+          pr.includes("Facebook") ||
+          pr.includes("เฟส")
         ) {
           document.getElementById("chkPR").innerHTML = checkedIcon;
         }
@@ -1410,7 +1439,9 @@
 
         if (
           !del.toLowerCase().includes("e-mail") &&
-          !del.toLowerCase().includes("line")
+          !del.toLowerCase().includes("line") &&
+          !del.includes("อีเมล") &&
+          !del.includes("ไลน์")
         ) {
           document.getElementById("chkDel3").innerHTML = checkedIcon;
           document.getElementById("pdfDelOther").innerText = del;
@@ -1424,10 +1455,9 @@
           req.AssignedTo || "";
 
         // ------------------------------------------------------------------
-        // แปลงเป็น PDF แบบ Preview (ไม่ดาวน์โหลดอัตโนมัติ)
+        // แปลงเป็น PDF แบบ Preview (ส่งไปเปิดที่ Iframe Modal)
         // ------------------------------------------------------------------
         const element = document.getElementById("pdfTemplate");
-        element.parentElement.classList.remove("d-none"); // แสดงชั่วคราวเพื่อให้จับภาพได้
 
         const opt = {
           margin: 0,
@@ -1437,20 +1467,13 @@
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         };
 
-        // ใช้คำสั่ง outputPdf('bloburl') เพื่อสร้าง URL จำลอง แล้วส่งเข้า iframe
         html2pdf()
           .set(opt)
           .from(element)
           .outputPdf("bloburl")
           .then((pdfUrl) => {
-            element.parentElement.classList.add("d-none"); // ซ่อน Template ทิ้งเหมือนเดิม
-
-            // ส่ง URL ไปเปิดใน iframe ของ Modal
             document.getElementById("pdfPreviewFrame").src = pdfUrl;
-
-            Swal.close(); // ปิดแจ้งเตือนโหลด
-
-            // เรียกเปิด Modal ของ Bootstrap ขึ้นมา
+            Swal.close();
             const previewModal = new bootstrap.Modal(
               document.getElementById("pdfPreviewModal"),
             );
@@ -1458,7 +1481,6 @@
           })
           .catch((err) => {
             Swal.fire("ข้อผิดพลาด", "ไม่สามารถสร้างตัวอย่าง PDF ได้", "error");
-            element.parentElement.classList.add("d-none");
           });
       }
       // end GeneratePDF
