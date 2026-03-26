@@ -1024,6 +1024,23 @@
         location.reload();
       }
 
+      // Register Form
+      document
+        .getElementById("regForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const data = Object.fromEntries(new FormData(this));
+          data.lineUID = currentLineUID;
+          Swal.fire({
+            title: "กำลังบันทึก...",
+            didOpen: () => Swal.showLoading(),
+          });
+          const res = await api("registerUser", data);
+          res.status === "success"
+            ? Swal.fire("สำเร็จ", res.message, "success").then(toggleAuth)
+            : Swal.fire("ผิดพลาด", res.message, "error");
+        });
+
       // --- USER DASH ---
       function showUserDash() {
         document.getElementById("reqFormSec").classList.add("hidden");
