@@ -61,7 +61,7 @@
       }
       #pdfTemplate {
         width: 210mm;
-        height: 297mm;
+        height: 296mm;
         padding: 15mm 15mm;
         background: white;
         color: black;
@@ -70,6 +70,13 @@
         line-height: 1.5;
         box-sizing: border-box;
         position: relative;
+        overflow: hidden;
+      }
+      span.wrap-text {
+        display: inline-block; /* or block */
+        width: 100%;
+        overflow-wrap: break-word; /* modern property */
+        word-wrap: break-word; /* alias for older browsers */
       }
     </style>
   </head>
@@ -610,10 +617,9 @@
             "
           ></span
           ><br /><br />
-          <b>**หมายเหตุ</b>
-          กลุ่มงานพัฒนายุทธศาสตร์สาธารณสุขพิจารณาจัดลำดับการปฏิบัติงานของเจ้าหน้าที่
-          ตามใบขอใช้บริการที่ได้รับการอนุมัติและ
-          ขอสงวนสิทธิ์งดให้บริการในกรณีที่อัตรากำลังเจ้าหน้าที่ไม่เพียงพอหรือติดภารกิจอื่น
+          <b>**หมายเหตุ</b
+          ><span style="font-size: small;">
+            กลุ่มงานพัฒนายุทธศาสตร์สาธารณสุขขอพิจารณาจัดลำดับการปฏิบัติงานของเจ้าหน้าที่ ตามใบขอใช้บริการที่ได้รับการอนุมัติและขอสงวนสิทธิ์งดให้บริการในกรณีที่อัตรากำลังเจ้าหน้าที่ไม่เพียงพอหรือติดภารกิจอื่น
         </div>
         <hr />
 
@@ -1514,13 +1520,14 @@
           `${req.AssignedTo}` || "";
 
         const element = document.getElementById("pdfTemplate");
+        
         html2pdf()
           .set({
             margin: 0,
             filename: `PR_${req.RequestID}.pdf`,
             image: { type: "jpeg", quality: 1 },
             html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" , compress: true},
           })
           .from(element)
           .outputPdf("bloburl")
