@@ -618,8 +618,10 @@
           ></span
           ><br /><br />
           <b>**หมายเหตุ</b
-          ><span style="font-size: small;">
-            กลุ่มงานพัฒนายุทธศาสตร์สาธารณสุขขอพิจารณาจัดลำดับการปฏิบัติงานของเจ้าหน้าที่ ตามใบขอใช้บริการที่ได้รับการอนุมัติและขอสงวนสิทธิ์งดให้บริการในกรณีที่อัตรากำลังเจ้าหน้าที่ไม่เพียงพอหรือติดภารกิจอื่น
+          ><span style="font-size: small">
+            กลุ่มงานพัฒนายุทธศาสตร์สาธารณสุขขอพิจารณาจัดลำดับการปฏิบัติงานของเจ้าหน้าที่
+            ตามใบขอใช้บริการที่ได้รับการอนุมัติและขอสงวนสิทธิ์งดให้บริการในกรณีที่อัตรากำลังเจ้าหน้าที่ไม่เพียงพอหรือติดภารกิจอื่น</span
+          >
         </div>
         <hr />
 
@@ -1537,14 +1539,19 @@
           `${req.AssignedTo}` || "";
 
         const element = document.getElementById("pdfTemplate");
-        
+
         html2pdf()
           .set({
             margin: 0,
             filename: `PR_${req.RequestID}.pdf`,
             image: { type: "jpeg", quality: 1 },
             html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" , compress: true},
+            jsPDF: {
+              unit: "mm",
+              format: "a4",
+              orientation: "portrait",
+              compress: true,
+            },
           })
           .from(element)
           .outputPdf("bloburl")
