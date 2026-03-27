@@ -508,25 +508,21 @@
                   />
                 </div>
                 <div class="col-md-4">
-                  <label class="small fw-bold">เวลาเริ่ม (น.)</label
-                  ><input
-                    type="time"
-                    id="startTime"
-                    name="startTime"
-                    class="form-control"
-                    required
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="small fw-bold">เวลาสิ้นสุด (น.)</label
-                  ><input
-                    type="time"
-                    id="endTime"
-                    name="endTime"
-                    class="form-control"
-                    required
-                  />
-                </div>
+  <label class="small fw-bold">เวลาเริ่ม (น.)</label>
+  <div class="input-group">
+    <select id="startHH" class="form-select time-hh" required></select>
+    <span class="input-group-text bg-light">:</span>
+    <select id="startMM" class="form-select time-mm" required></select>
+  </div>
+</div>
+<div class="col-md-4">
+  <label class="small fw-bold">เวลาสิ้นสุด (น.)</label>
+  <div class="input-group">
+    <select id="endHH" class="form-select time-hh" required></select>
+    <span class="input-group-text bg-light">:</span>
+    <select id="endMM" class="form-select time-mm" required></select>
+  </div>
+</div>
 
                 <div class="col-md-12 mt-3">
                   <label class="small fw-bold text-teal mb-1"
@@ -601,14 +597,13 @@
                   ></select>
                 </div>
                 <div class="col-md-6">
-                  <label class="small fw-bold">เวลาออก สสจ. (ถ้ามี)</label
-                  ><input
-                    type="time"
-                    id="depTime"
-                    name="depTime"
-                    class="form-control"
-                  />
-                </div>
+  <label class="small fw-bold">เวลาออก สสจ. (ถ้ามี)</label>
+  <div class="input-group">
+    <select id="depHH" class="form-select time-hh"></select>
+    <span class="input-group-text bg-light">:</span>
+    <select id="depMM" class="form-select time-mm"></select>
+  </div>
+</div>
               </div>
 
               <div class="mb-3 p-3 bg-light rounded">
@@ -1233,6 +1228,17 @@
             }
           }
           Swal.close();
+
+      // สร้างตัวเลือกชั่วโมง 00-23
+      let hhOpts = '<option value="" disabled selected>ชั่วโมง</option>';
+      for(let i=0; i<=23; i++) hhOpts += `<option value="${i.toString().padStart(2,'0')}">${i.toString().padStart(2,'0')}</option>`;
+      document.querySelectorAll('.time-hh').forEach(el => el.innerHTML = hhOpts);
+
+      // สร้างตัวเลือกนาที 00-59
+      let mmOpts = '<option value="" disabled selected>นาที</option>';
+      for(let i=0; i<=45; i+=15) mmOpts += `<option value="${i.toString().padStart(2,'0')}">${i.toString().padStart(2,'0')}</option>`;
+      document.querySelectorAll('.time-mm').forEach(el => el.innerHTML = mmOpts);
+
         } catch (e) {
           console.error("Init Error", e);
           Swal.fire(
@@ -1373,91 +1379,111 @@
       }
 
       function showForm(editData = null) {
-        hideAllDash();
-        document.getElementById("reqFormSec").classList.remove("hidden");
-        document.getElementById("serviceForm").reset();
-        ["otherActTxt", "otherPrTxt", "otherDelTxt"].forEach((id) => {
-          if (document.getElementById(id)) {
-            document.getElementById(id).classList.add("hidden");
-            document.getElementById(id).value = "";
-          }
-        });
-
-        if (editData) {
-          document.getElementById("formTitle").innerText =
-            "แก้ไขคำขอ: " + editData.RequestID;
-          document.getElementById("btnSubmitForm").innerText = "บันทึกการแก้ไข";
-          document
-            .getElementById("btnSubmitForm")
-            .classList.replace("btn-success", "btn-warning");
-          document.getElementById("editId").value = editData.RequestID;
-          document.getElementById("projectName").value = editData.ProjectName;
-          document.getElementById("eventDate").value = new Date(
-            editData.EventDate,
-          )
-            .toISOString()
-            .split("T")[0];
-          document.getElementById("startTime").value = fmtTime(
-            editData.StartTime,
-          );
-          document.getElementById("endTime").value = fmtTime(editData.EndTime);
-          document.getElementById("depTime").value = fmtTime(editData.DepTime);
-
-          if (editData.LocationType === "นอก สสจ.") {
-            document.getElementById("locOut").checked = true;
-            toggleLocUI();
-            document.getElementById("outLocation").value =
-              editData.Location || "";
-          } else {
-            document.getElementById("locIn").checked = true;
-            toggleLocUI();
-            let loc = editData.Location || "";
-            let opts = Array.from(
-              document.getElementById("ddRoom").options,
-            ).map((o) => o.value);
-            if (opts.includes(loc) && loc !== "สถานที่อื่นๆ ภายใน สสจ.") {
-              document.getElementById("ddRoom").value = loc;
-              toggleRoomUI();
-              document.getElementById("otherRoom").value = "";
-            } else {
-              document.getElementById("ddRoom").value =
-                "สถานที่อื่นๆ ภายใน สสจ.";
-              toggleRoomUI();
-              document.getElementById("otherRoom").value = loc;
-            }
-          }
-          document.getElementById("ddVeh").value = editData.Vehicle;
-          document.getElementById("remarkTxt").value = editData.Remark || "";
-
-          const tickChk = (dataStr, cls, txtId) => {
-            let arr = dataStr.split(", ");
-            document.querySelectorAll(cls).forEach((c) => {
-              if (arr.includes(c.value)) c.checked = true;
-              let otherItem = arr.find((a) => a.startsWith("อื่นๆ"));
-              if (c.value === "อื่นๆ" && otherItem) {
-                c.checked = true;
-                document.getElementById(txtId).classList.remove("hidden");
-                let match = otherItem.match(/\((.*?)\)/);
-                if (match) document.getElementById(txtId).value = match[1];
-              }
-            });
-          };
-          tickChk(editData.Activities, ".chk-act", "otherActTxt");
-          tickChk(editData.PRChannels, ".chk-pr", "otherPrTxt");
-          tickChk(editData.Delivery, ".chk-del", "otherDelTxt");
-        } else {
-          document.getElementById("formTitle").innerText = "สร้างคำขอใช้บริการ";
-          document.getElementById("btnSubmitForm").innerText = "บันทึกส่งคำขอ";
-          document
-            .getElementById("btnSubmitForm")
-            .classList.replace("btn-warning", "btn-success");
-          document.getElementById("editId").value = "";
-          document.getElementById("locIn").checked = true;
-          document.getElementById("ddRoom").selectedIndex = 0;
-          toggleLocUI();
-          toggleRoomUI();
+    hideAllDash(); 
+    document.getElementById('reqFormSec').classList.remove('hidden'); 
+    document.getElementById('serviceForm').reset();
+    
+    // ซ่อนช่องกรอก "อื่นๆ" ให้หมดก่อนเริ่ม
+    ['otherActTxt', 'otherPrTxt', 'otherDelTxt'].forEach(id => { 
+      if(document.getElementById(id)) { 
+        document.getElementById(id).classList.add('hidden'); 
+        document.getElementById(id).value = ""; 
+      }
+    });
+    
+    if(editData) {
+      // โหมดแก้ไข (Edit)
+      document.getElementById('formTitle').innerText = "แก้ไขคำขอ: " + editData.RequestID; 
+      document.getElementById('btnSubmitForm').innerText = "บันทึกการแก้ไข"; 
+      document.getElementById('btnSubmitForm').classList.replace('btn-success', 'btn-warning');
+      document.getElementById('editId').value = editData.RequestID; 
+      document.getElementById('projectName').value = editData.ProjectName; 
+      document.getElementById('eventDate').value = new Date(editData.EventDate).toISOString().split('T')[0];
+      
+      // 1. จัดการเวลา Dropdown 00-23, 00-59
+      const st = fmtTime(editData.StartTime).split(':');
+      if(st.length === 2) { 
+        document.getElementById('startHH').value = st[0]; 
+        document.getElementById('startMM').value = st[1]; 
+      }
+      
+      const en = fmtTime(editData.EndTime).split(':');
+      if(en.length === 2) { 
+        document.getElementById('endHH').value = en[0]; 
+        document.getElementById('endMM').value = en[1]; 
+      }
+      
+      const dp = fmtTime(editData.DepTime).split(':');
+      if(dp.length === 2 && dp[0] !== "00") { 
+        document.getElementById('depHH').value = dp[0]; 
+        document.getElementById('depMM').value = dp[1]; 
+      } else {
+        document.getElementById('depHH').value = ""; 
+        document.getElementById('depMM').value = "";
+      }
+      
+      // 2. จัดการสถานที่ (ใน/นอก สสจ.)
+      if(editData.LocationType === 'นอก สสจ.') { 
+        document.getElementById('locOut').checked = true; 
+        toggleLocUI(); 
+        document.getElementById('outLocation').value = editData.Location || ""; 
+      } else { 
+        document.getElementById('locIn').checked = true; 
+        toggleLocUI(); 
+        let loc = editData.Location || ""; 
+        let opts = Array.from(document.getElementById('ddRoom').options).map(o => o.value);
+        if(opts.includes(loc) && loc !== 'สถานที่อื่นๆ ภายใน สสจ.') { 
+          document.getElementById('ddRoom').value = loc; 
+          toggleRoomUI(); 
+          document.getElementById('otherRoom').value = ""; 
+        } else { 
+          document.getElementById('ddRoom').value = 'สถานที่อื่นๆ ภายใน สสจ.'; 
+          toggleRoomUI(); 
+          document.getElementById('otherRoom').value = loc; 
         }
       }
+      
+      document.getElementById('ddVeh').value = editData.Vehicle; 
+      document.getElementById('remarkTxt').value = editData.Remark || "";
+
+      // 3. ติ๊ก Checkbox ตามฐานข้อมูล
+      const tickChk = (dataStr, cls, txtId) => { 
+        let arr = dataStr.split(', '); 
+        document.querySelectorAll(cls).forEach(c => { 
+          if(arr.includes(c.value)) c.checked = true; 
+          let otherItem = arr.find(a => a.startsWith('อื่นๆ')); 
+          if(c.value === "อื่นๆ" && otherItem) { 
+            c.checked = true; 
+            document.getElementById(txtId).classList.remove('hidden'); 
+            let match = otherItem.match(/\((.*?)\)/); 
+            if(match) document.getElementById(txtId).value = match[1]; 
+          } 
+        }); 
+      };
+      
+      tickChk(editData.Activities, '.chk-act', 'otherActTxt'); 
+      tickChk(editData.PRChannels, '.chk-pr', 'otherPrTxt'); 
+      tickChk(editData.Delivery, '.chk-del', 'otherDelTxt');
+      
+    } else {
+      // โหมดสร้างคำขอใหม่
+      document.getElementById('formTitle').innerText = "สร้างคำขอใช้บริการ"; 
+      document.getElementById('btnSubmitForm').innerText = "บันทึกส่งคำขอ"; 
+      document.getElementById('btnSubmitForm').classList.replace('btn-warning', 'btn-success'); 
+      document.getElementById('editId').value = "";
+      
+      // ตั้งค่าเริ่มต้น สถานที่ใน สสจ.
+      document.getElementById('locIn').checked = true; 
+      document.getElementById('ddRoom').selectedIndex = 0; 
+      toggleLocUI(); 
+      toggleRoomUI();
+      
+      // เคลียร์ค่า Dropdown เวลา
+      document.getElementById('startHH').value = ""; document.getElementById('startMM').value = "";
+      document.getElementById('endHH').value = ""; document.getElementById('endMM').value = "";
+      document.getElementById('depHH').value = ""; document.getElementById('depMM').value = "";
+    }
+  }  //end showForm
 
       async function loadUserDash() {
         hideAllDash();
@@ -1756,120 +1782,93 @@
     const res = await api('submitWorkLog', { id: id, summary: sum, obstacles: obs, sentLink: lnk, sendEmail: mail });
     res.status === 'success' ? Swal.fire('เรียบร้อย', 'บันทึกงานเสร็จสิ้น', 'success').then(() => showPhotoDash()) : Swal.fire('ผิดพลาด', res.message, 'error');
   }
-      // --- FORM SUBMIT ---
-      document
-        .getElementById("serviceForm")
-        .addEventListener("submit", async function (e) {
-          e.preventDefault();
-          const reqDate = document.getElementById("eventDate").value,
-            reqStart = document.getElementById("startTime").value,
-            reqEnd = document.getElementById("endTime").value;
-          const getVals = (cls, txtId) => {
-            let arr = [];
-            document
-              .querySelectorAll(cls + ":checked")
-              .forEach((c) =>
-                arr.push(
-                  c.value === "อื่นๆ"
-                    ? `อื่นๆ (${document.getElementById(txtId).value})`
-                    : c.value,
-                ),
-              );
-            return arr.join(", ");
-          };
-          const acts = getVals(".chk-act", "otherActTxt"),
-            prs = getVals(".chk-pr", "otherPrTxt"),
-            dels = getVals(".chk-del", "otherDelTxt");
-          if (!acts || !prs || !dels)
-            return Swal.fire(
-              "แจ้งเตือน",
-              "กรุณาเลือก กิจกรรม/ช่องทาง/การส่งกลับ อย่างน้อย 1 ข้อ",
-              "warning",
-            );
+      
+      // =====================================
+  // บันทึกฟอร์ม (Submit Form)
+  // =====================================
+  document.getElementById('serviceForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const reqDate = document.getElementById('eventDate').value;
+    
+    // ดึงค่าเวลาจาก Dropdown มาต่อกันเป็น HH:MM
+    const reqStart = `${document.getElementById('startHH').value}:${document.getElementById('startMM').value}`;
+    const reqEnd = `${document.getElementById('endHH').value}:${document.getElementById('endMM').value}`;
+    
+    const getVals = (cls, txtId) => { 
+      let arr = []; 
+      document.querySelectorAll(cls+':checked').forEach(c => arr.push(c.value === "อื่นๆ" ? `อื่นๆ (${document.getElementById(txtId).value})` : c.value)); 
+      return arr.join(', '); 
+    };
+    
+    const acts = getVals('.chk-act', 'otherActTxt');
+    const prs = getVals('.chk-pr', 'otherPrTxt');
+    const dels = getVals('.chk-del', 'otherDelTxt');
+    
+    if(!acts || !prs || !dels) return Swal.fire('แจ้งเตือน','กรุณาเลือก กิจกรรม/ช่องทาง/การส่งกลับ อย่างน้อย 1 ข้อ','warning');
 
-          let conflictMsg = "";
-          globalApprovedEvents.forEach((ev) => {
-            if (ev.dateStr === reqDate) {
-              if (reqStart < ev.endStr && reqEnd > ev.startStr)
-                conflictMsg += `<br><b class="text-danger">- ${ev.projectName} (${ev.startStr} - ${ev.endStr})</b>`;
-            }
-          });
-          if (conflictMsg !== "") {
-            const cf = await Swal.fire({
-              title: "เวลาซ้อนทับ!",
-              html: `คิวงานที่อนุมัติแล้ว:${conflictMsg}<br><br>ยืนยันส่งคำขอเพื่อให้หัวหน้าพิจารณา?`,
-              icon: "warning",
-              showCancelButton: true,
-              confirmButtonText: "ยืนยันส่ง",
-              cancelButtonText: "แก้ไขเวลา",
-            });
-            if (!cf.isConfirmed) return;
-          }
+    // ตรวจสอบคิวซ้อน
+    let conflictMsg = ""; 
+    globalApprovedEvents.forEach(ev => { 
+      if(ev.dateStr === reqDate) { 
+        if(reqStart < ev.endStr && reqEnd > ev.startStr) {
+          conflictMsg += `<br><b class="text-danger">- ${ev.projectName} (${ev.startStr} - ${ev.endStr})</b>`; 
+        }
+      } 
+    });
+    
+    if(conflictMsg !== "") { 
+      const cf = await Swal.fire({ 
+        title: 'เวลาซ้อนทับ!', 
+        html: `คิวงานที่อนุมัติแล้ว:${conflictMsg}<br><br>ยืนยันส่งคำขอเพื่อให้หัวหน้าพิจารณา?`, 
+        icon: 'warning', 
+        showCancelButton: true, 
+        confirmButtonText: 'ยืนยันส่ง', 
+        cancelButtonText: 'แก้ไขเวลา' 
+      }); 
+      if(!cf.isConfirmed) return; 
+    }
 
-          let locType = document.querySelector(
-              'input[name="locType"]:checked',
-            ).value,
-            finalLoc = "",
-            finalVeh = "",
-            finalDepTime = "";
-          if (locType === "ใน สสจ.") {
-            let rm = document.getElementById("ddRoom").value;
-            finalLoc =
-              rm === "สถานที่อื่นๆ ภายใน สสจ."
-                ? document.getElementById("otherRoom").value
-                : rm;
-            finalVeh = "ไม่ใช้ยานพาหนะ";
-            finalDepTime = "";
-          } else {
-            finalLoc = document.getElementById("outLocation").value;
-            finalVeh = document.getElementById("ddVeh").value;
-            finalDepTime = document.getElementById("depTime").value;
-          }
+    let locType = document.querySelector('input[name="locType"]:checked').value, finalLoc = "", finalVeh = "", finalDepTime = "";
+    
+    if (locType === "ใน สสจ.") { 
+      let rm = document.getElementById('ddRoom').value; 
+      finalLoc = (rm === 'สถานที่อื่นๆ ภายใน สสจ.') ? document.getElementById('otherRoom').value : rm; 
+      finalVeh = "ไม่ใช้ยานพาหนะ"; 
+      finalDepTime = "";
+    } else { 
+      finalLoc = document.getElementById('outLocation').value; 
+      finalVeh = document.getElementById('ddVeh').value; 
+      let dH = document.getElementById('depHH').value, dM = document.getElementById('depMM').value;
+      finalDepTime = (dH && dM) ? `${dH}:${dM}` : ""; 
+    }
 
-          let payload = {
-            id: document.getElementById("editId").value,
-            username: currentUser.username,
-            fullName: currentUser.name,
-            position: currentUser.pos,
-            department: currentUser.dept,
-            phone: currentUser.phone,
-            email: currentUser.email,
-            projectName: document.getElementById("projectName").value,
-            eventDate: reqDate,
-            startTime: reqStart,
-            endTime: reqEnd,
-            locationType: locType,
-            location: finalLoc,
-            vehicle: finalVeh,
-            depTime: finalDepTime,
-            activities: acts,
-            prChannels: prs,
-            delivery: dels,
-            remark: document.getElementById("remarkTxt").value,
-          };
+    let payload = {
+      id: document.getElementById('editId').value, 
+      username: currentUser.username, fullName: currentUser.name, position: currentUser.pos, 
+      department: currentUser.dept, phone: currentUser.phone, email: currentUser.email,
+      projectName: document.getElementById('projectName').value, eventDate: reqDate, 
+      startTime: reqStart, endTime: reqEnd, locationType: locType, location: finalLoc, 
+      vehicle: finalVeh, depTime: finalDepTime, 
+      activities: acts, prChannels: prs, delivery: dels, 
+      remark: document.getElementById('remarkTxt').value
+    };
 
-          Swal.fire({
-            title: "กำลังบันทึก...",
-            didOpen: () => Swal.showLoading(),
-          });
-          const file = document.getElementById("fileUpload").files[0];
-          if (file) {
-            if (file.size > 5 * 1024 * 1024)
-              return Swal.fire("ผิดพลาด", "ไฟล์เกิน 5MB", "error");
-            const reader = new FileReader();
-            reader.onload = async function (e) {
-              payload.fileData = {
-                filename: file.name,
-                mimeType: file.type,
-                bytes: e.target.result.split(",")[1],
-              };
-              await execForm(payload);
-            };
-            reader.readAsDataURL(file);
-          } else {
-            await execForm(payload);
-          }
-        });
+    Swal.fire({title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading()});
+    const file = document.getElementById('fileUpload').files[0];
+    
+    if(file) { 
+      if(file.size > 5 * 1024 * 1024) return Swal.fire('ผิดพลาด', 'ไฟล์เกิน 5MB', 'error'); 
+      const reader = new FileReader(); 
+      reader.onload = async function(e) { 
+        payload.fileData = { filename: file.name, mimeType: file.type, bytes: e.target.result.split(',')[1] }; 
+        await execForm(payload); 
+      }; 
+      reader.readAsDataURL(file); 
+    } else { 
+      await execForm(payload); 
+    }
+  });
+
       async function execForm(payload) {
         const res = await api(
           payload.id ? "updateRequest" : "submitRequest",
