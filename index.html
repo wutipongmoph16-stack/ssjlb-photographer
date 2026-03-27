@@ -1112,30 +1112,41 @@
           const evRes = await api("getApprovedEvents");
           if (evRes.status === "success") {
             globalApprovedEvents = evRes.data;
+
             const showDailyQueue = (dateStr) => {
-              let dayEvents = globalApprovedEvents.filter(
-                (ev) => ev.dateStr === dateStr,
-              );
-              dayEvents.sort((a, b) => a.startStr.localeCompare(b.startStr));
-              if (dayEvents.length === 0)
-                return Swal.fire(
-                  "ตารางคิวงาน",
-                  `ไม่มีคิวงาน PR ในวันที่ ${getThaiDateFull(dateStr)}`,
-                  "info",
-                );
-              let html = `<div class="text-start" style="font-size: 1.05rem; line-height: 1.5; max-height: 60vh; overflow-y: auto; overflow-x: hidden; padding-right: 5px;"><h5 class="fw-bold text-teal border-bottom pb-2 mb-3"><i class="bi bi-calendar-event"></i> ประจำวันที่ ${getThaiDateFull(dateStr)}</h5>`;
-              dayEvents.forEach((ev) => {
-                html += `<div class="mb-3 p-3 bg-light rounded border-start border-4 ${ev.color === "#64748b" ? "border-secondary" : "border-success"} shadow-sm"><div class="${ev.color === "#64748b" ? "text-secondary" : "text-primary"} fw-bold mb-1"><i class="bi bi-clock"></i> ${ev.startStr} - ${ev.endStr} น. ${ev.color === "#64748b" ? "(เสร็จสิ้น)" : ""}</div><div class="mb-1 text-dark"><b>โครงการ:</b> ${ev.projectName}</div><div class="text-dark"><b>สถานที่:</b> ${ev.location || "-"}</div><div class="text-dark"><b>ผู้รับผิดชอบ:</b> <span class="fw-bold ${ev.color === "#64748b" ? "text-secondary" : "text-success"}">${ev.assignedTo}</span></div></div>`;
-              });
-              html += `</div>`;
-              Swal.fire({
-                html: html,
-                width: "600px",
-                showConfirmButton: true,
-                confirmButtonText: "ปิด",
-                confirmButtonColor: "#0f766e",
-              });
-            };
+            let dayEvents = globalApprovedEvents.filter(ev => ev.dateStr === dateStr);
+            dayEvents.sort((a, b) => a.startStr.localeCompare(b.startStr));
+            
+            if (dayEvents.length === 0) return Swal.fire('ตารางคิวงาน', `ไม่มีคิวงาน PR ในวันที่ ${getThaiDateFull(dateStr)}`, 'info');
+            
+            let html = `<div class="text-start" style="font-size: 0.95rem; line-height: 1.5; max-height: 60vh; overflow-y: auto; overflow-x: hidden; padding-right: 5px;">
+                          <h5 class="fw-bold text-teal border-bottom pb-2 mb-3"><i class="bi bi-calendar-event"></i> ประจำวันที่ ${getThaiDateFull(dateStr)}</h5>`;
+            
+            dayEvents.forEach(ev => { 
+              html += `<div class="mb-3 p-3 bg-light rounded border-start border-4 ${ev.color==='#64748b'?'border-secondary':'border-success'} shadow-sm">
+                        <div class="${ev.color==='#64748b'?'text-secondary':'text-primary'} fw-bold mb-2 pb-2 border-bottom">
+                          <i class="bi bi-clock"></i> ${ev.startStr} - ${ev.endStr} น. ${ev.color==='#64748b'?'<span class="badge bg-secondary ms-2"><i class="bi bi-check2-all"></i> เสร็จสิ้นแล้ว</span>':''}
+                        </div>
+                        
+                        <div class="mb-1 text-dark"><b><i class="bi bi-bookmark-star text-warning"></i> โครงการ:</b> ${ev.projectName}</div>
+                        <div class="mb-1 text-dark"><b><i class="bi bi-geo-alt text-danger"></i> สถานที่:</b> ${ev.location || '-'}</div>
+                        <div class="mb-2 text-dark"><b><i class="bi bi-camera-reels text-info"></i> กิจกรรม:</b> <span class="text-muted">${ev.activities || '-'}</span></div>
+                        
+                        <div class="mt-2 pt-2 border-top text-dark" style="font-size: 0.9rem;">
+                          <b><i class="bi bi-person-badge text-secondary"></i> ผู้ขอ:</b> ${ev.reqName} (${ev.reqDept})<br>
+                          <b><i class="bi bi-telephone text-secondary"></i> ติดต่อ:</b> ${ev.reqPhone || '-'}
+                        </div>
+                        
+                        <div class="mt-2 p-2 bg-white border rounded text-dark text-center">
+                          <b><i class="bi bi-person-video text-success"></i> ช่างภาพผู้รับผิดชอบ:</b> <span class="fw-bold ${ev.color==='#64748b'?'text-secondary':'text-success'}">${ev.assignedTo}</span>
+                        </div>
+                      </div>`; 
+            });
+            
+            html += `</div>`; 
+            Swal.fire({ html: html, width: '600px', showConfirmButton: true, confirmButtonText: 'ปิดหน้าต่าง', confirmButtonColor: '#0f766e' });
+         };
+
             const calendar = new FullCalendar.Calendar(
               document.getElementById("calendar"),
               {
