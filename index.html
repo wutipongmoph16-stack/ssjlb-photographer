@@ -3,10 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="manifest" href="site.webmanifest">
     <title>ระบบขอใช้บริการ PR สสจ.ลพบุรี</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
@@ -872,11 +873,16 @@
               <div style="font-weight: bold; margin-bottom: 10px">
                 สำหรับผู้ขอใช้บริการ
               </div>
-              <div style="text-align: center; margin-bottom: 20px">
+              <div style="text-align: start; margin-bottom: 20px ;padding-left: 10px;">
                 ลงชื่อ
                 <span class="underline-border" style="width: 150px"></span>
-                ผู้ขอ<br />(<span id="pdfSignName" class="underline-border" style="width: 180px; text-align: center;"></span>)<br />
+                ผู้ขอ<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span id="pdfSignName" class="underline-border" style="width: 180px; text-align: Center;"></span>)<br />
                 
+              </div>
+              <div style="text-align: start; margin-bottom: 10px; padding-left: 5px;">
+                ลงชื่อ
+                <span class="underline-border" style="width: 150px"></span>
+                หัวหน้ากลุ่มงาน/งาน<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="underline-border" style="width: 180px;"></span>)               
               </div>
               <div id="photographer_sign" style=" position: absolute; bottom: 65px;">
                   <div style="font-weight: bold; margin-bottom: 10px; bottom: 0px; ">
@@ -1495,10 +1501,10 @@
       toggleLocUI(); 
       toggleRoomUI();
       
-      // เคลียร์ค่า Dropdown เวลา
-      document.getElementById('startHH').value = ""; document.getElementById('startMM').value = "";
-      document.getElementById('endHH').value = ""; document.getElementById('endMM').value = "";
-      document.getElementById('depHH').value = ""; document.getElementById('depMM').value = "";
+      // ตั้งค่าเวลาเริ่มต้น (Default) เป็น 08:00 และ 09:00
+      setTimeDropdown('startHH', 'startMM', '08', '00');
+      setTimeDropdown('endHH', 'endMM', '09', '00');
+      setTimeDropdown('depHH', 'depMM', '08', '00');
     }
   }  //end showForm
 
@@ -2017,11 +2023,13 @@
         //   req.AssignedTo || "";
 
         const element = document.getElementById("pdfTemplate");
+        // 📌 กำหนดชื่อไฟล์ที่นี่
+    const fileName = `${req.RequestID}_${req.FullName}.pdf`;
 
         html2pdf()
           .set({
             margin: 0,
-            filename: `${req.RequestID}_${req.FullName}.pdf`,
+            fileName,
             image: { type: "jpeg", quality: 1 },
             html2canvas: { scale: 2, useCORS: true },
             jsPDF: {
@@ -2034,7 +2042,23 @@
           .from(element)
           .outputPdf("bloburl")
           .then((pdfUrl) => {
-            document.getElementById("pdfPreviewFrame").src = pdfUrl;
+            // document.getElementById("pdfPreviewFrame").src = pdfUrl;
+
+
+            // 📌 1. ใส่ #toolbar=0 ต่อท้าย URL เพื่อซ่อนแถบสีดำของเบราว์เซอร์
+            document.getElementById('pdfPreviewFrame').src = pdfUrl + '#toolbar=0'; 
+            
+            // 📌 2. สร้างปุ่มดาวน์โหลดเองใน Modal Footer
+            const modalFooter = document.querySelector('#pdfPreviewModal .modal-footer');
+            if (modalFooter) {
+              modalFooter.innerHTML = `
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิดหน้าต่าง</button>
+                <button type="button" class="btn btn-primary fw-bold" onclick="downloadCustomPDF('${pdfUrl}', '${fileName}')">
+                  <i class="bi bi-download"></i> ดาวน์โหลด PDF
+                </button>
+              `;
+            }
+
             Swal.close();
             new bootstrap.Modal(
               document.getElementById("pdfPreviewModal"),
@@ -2044,6 +2068,95 @@
             Swal.fire("ผิดพลาด", "สร้าง PDF ไม่ได้", "error");
           });
       }
+
+      function downloadCustomPDF(url, fileName) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  // =====================================
+  // ระบบ Smart Time Sync (ซิงค์และตรวจสอบเวลาอัตโนมัติ)
+  // =====================================
+  
+  // 1. ฟังก์ชันช่วยตั้งค่าเวลาให้กับ Dropdown
+  function setTimeDropdown(hhId, mmId, hhVal, mmVal) {
+    let hh = document.getElementById(hhId);
+    let mm = document.getElementById(mmId);
+    if(hh && mm) {
+      hh.value = hhVal;
+      mm.value = mmVal;
+    }
+  }
+
+  // 2. ฟังก์ชันตรวจสอบและอัปเดตเวลา
+  function syncEndTimes() {
+    let stHH = document.getElementById('startHH').value;
+    let stMM = document.getElementById('startMM').value;
+    let enHH = document.getElementById('endHH');
+    let enMM = document.getElementById('endMM');
+    
+    // ถ้ายังไม่ได้เลือกเวลาเริ่ม ก็ข้ามไปก่อน
+    if(!stHH || !stMM) return;
+    
+    let startTotalMins = (parseInt(stHH) * 60) + parseInt(stMM);
+    let endTotalMins = 0;
+    
+    if(enHH.value && enMM.value) {
+      endTotalMins = (parseInt(enHH.value) * 60) + parseInt(enMM.value);
+    }
+
+    // กรณีที่ 1: ถ้าเวลาสิ้นสุด "น้อยกว่าหรือเท่ากับ" เวลาเริ่มต้น หรือยังไม่ได้เลือกเวลาสิ้นสุด
+    // -> ให้ดันเวลาสิ้นสุดบวกเพิ่มไปอีก 1 ชั่วโมงอัตโนมัติ (เช่น เริ่ม 08:00 -> สิ้นสุด 09:00)
+    if (!enHH.value || !enMM.value || endTotalMins <= startTotalMins) {
+      let newEndMins = startTotalMins + 60; // บวกไป 1 ชั่วโมง (60 นาที)
+      
+      // กรณีเกินเที่ยงคืน (23:59) ให้ตันที่ 23:45
+      if (newEndMins > (23 * 60 + 45)) newEndMins = (23 * 60 + 45); 
+
+      let newHH = Math.floor(newEndMins / 60).toString().padStart(2, '0');
+      let newMM = (newEndMins % 60).toString().padStart(2, '0');
+      
+      setTimeDropdown('endHH', 'endMM', newHH, newMM);
+    }
+  }
+
+  // 3. ผูกเหตุการณ์ (Event Listener) ให้ทำงานเมื่อมีการเปลี่ยนเวลาเริ่มต้น
+  document.addEventListener('DOMContentLoaded', () => {
+    // เมื่อมีการคลิกเปลี่ยนชั่วโมง หรือ นาที ของช่อง "เวลาเริ่ม" ให้เรียกใช้ฟังก์ชันซิงค์เวลา
+    document.getElementById('startHH').addEventListener('change', syncEndTimes);
+    document.getElementById('startMM').addEventListener('change', syncEndTimes);
+    
+    // ป้องกันการเลือกเวลาสิ้นสุดที่น้อยกว่าเวลาเริ่ม (กรณีผู้ใช้ไปจิ้มเปลี่ยนเวลาสิ้นสุดเอง)
+    const checkEndTimeLogic = () => {
+      let stHH = document.getElementById('startHH').value;
+      let stMM = document.getElementById('startMM').value;
+      let enHH = document.getElementById('endHH').value;
+      let enMM = document.getElementById('endMM').value;
+      
+      if(stHH && stMM && enHH && enMM) {
+        let startTotalMins = (parseInt(stHH) * 60) + parseInt(stMM);
+        let endTotalMins = (parseInt(enHH) * 60) + parseInt(enMM);
+        
+        if (endTotalMins <= startTotalMins) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'ระบุเวลาไม่ถูกต้อง',
+            text: 'เวลาสิ้นสุด ต้องมากกว่าเวลาเริ่มต้น',
+            confirmButtonColor: '#0f766e'
+          }).then(() => {
+            syncEndTimes(); // รีเซ็ตเวลาสิ้นสุดกลับไปให้ถูกต้อง
+          });
+        }
+      }
+    };
+
+    document.getElementById('endHH').addEventListener('change', checkEndTimeLogic);
+    document.getElementById('endMM').addEventListener('change', checkEndTimeLogic);
+  });
     </script>
   </body>
 </html>
