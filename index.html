@@ -1797,17 +1797,18 @@
     res.status === 'success' ? Swal.fire('เรียบร้อย', 'บันทึกงานเสร็จสิ้น', 'success').then(() => showPhotoDash()) : Swal.fire('ผิดพลาด', res.message, 'error');
   }
       
-      // =====================================
+// =====================================
   // บันทึกฟอร์ม (Submit Form)
   // =====================================
   document.getElementById('serviceForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const reqDate = document.getElementById('eventDate').value;
     
-    // ดึงค่าเวลาจาก Dropdown มาต่อกันเป็น HH:MM
+    // 1. ดึงค่าเวลาจาก Dropdown มาต่อกันเป็นรูปแบบ HH:MM
     const reqStart = `${document.getElementById('startHH').value}:${document.getElementById('startMM').value}`;
     const reqEnd = `${document.getElementById('endHH').value}:${document.getElementById('endMM').value}`;
     
+    // 2. ฟังก์ชันช่วยดึงค่าจาก Checkbox (รวมกรณีที่เลือก "อื่นๆ" แล้วพิมพ์ข้อความด้วย)
     const getVals = (cls, txtId) => { 
       let arr = []; 
       document.querySelectorAll(cls+':checked').forEach(c => arr.push(c.value === "อื่นๆ" ? `อื่นๆ (${document.getElementById(txtId).value})` : c.value)); 
@@ -1818,9 +1819,10 @@
     const prs = getVals('.chk-pr', 'otherPrTxt');
     const dels = getVals('.chk-del', 'otherDelTxt');
     
+    // บังคับให้ต้องเลือกอย่างน้อย 1 ตัวเลือกในแต่ละหมวด
     if(!acts || !prs || !dels) return Swal.fire('แจ้งเตือน','กรุณาเลือก กิจกรรม/ช่องทาง/การส่งกลับ อย่างน้อย 1 ข้อ','warning');
 
-    // ตรวจสอบคิวซ้อน
+    // 3. ตรวจสอบคิวซ้อน (เวลาทับซ้อนกับคิวงานที่อนุมัติไปแล้วในวันเดียวกัน)
     let conflictMsg = ""; 
     globalApprovedEvents.forEach(ev => { 
       if(ev.dateStr === reqDate) { 
@@ -1842,6 +1844,7 @@
       if(!cf.isConfirmed) return; 
     }
 
+    // 4. จัดการข้อมูลสถานที่ และยานพาหนะตามเงื่อนไข ใน สสจ. / นอก สสจ.
     let locType = document.querySelector('input[name="locType"]:checked').value, finalLoc = "", finalVeh = "", finalDepTime = "";
     
     if (locType === "ใน สสจ.") { 
@@ -1856,37 +1859,19 @@
       finalDepTime = (dH && dM) ? `${dH}:${dM}` : ""; 
     }
 
+    // 5. แพ็กข้อมูลเตรียมส่งกลับไปที่ Code.gs
     let payload = {
       id: document.getElementById('editId').value, 
-<<<<<<< HEAD:Index.html
-      username: currentUser.username, 
-      fullName: currentUser.name, 
-      position: currentUser.pos, 
-      department: currentUser.dept, 
-      phone: currentUser.phone, 
-      email: currentUser.email,
-      projectName: document.getElementById('projectName').value, 
-      eventDate: reqDate, 
-      startTime: reqStart, 
-      endTime: reqEnd, 
-      locationType: locType, 
-      location: finalLoc, 
-      vehicle: finalVeh, 
-      depTime: finalDepTime, 
-      activities: acts, 
-      prChannels: prs, 
-      delivery: dels, 
-=======
       username: currentUser.username, fullName: currentUser.name, position: currentUser.pos, 
       department: currentUser.dept, phone: currentUser.phone, email: currentUser.email,
       projectName: document.getElementById('projectName').value, eventDate: reqDate, 
       startTime: reqStart, endTime: reqEnd, locationType: locType, location: finalLoc, 
       vehicle: finalVeh, depTime: finalDepTime, 
       activities: acts, prChannels: prs, delivery: dels, 
->>>>>>> 3b687b56ba6b19e3a1e40036500c8bc47b133ea6:index.html
       remark: document.getElementById('remarkTxt').value
     };
 
+    // 6. ตรวจสอบและจัดการไฟล์แนบ
     Swal.fire({title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading()});
     const file = document.getElementById('fileUpload').files[0];
     
@@ -1895,36 +1880,31 @@
       const reader = new FileReader(); 
       reader.onload = async function(e) { 
         payload.fileData = { filename: file.name, mimeType: file.type, bytes: e.target.result.split(',')[1] }; 
-        await execForm(payload); 
+        await execForm(payload); // เรียกฟังก์ชันส่งข้อมูลพร้อมไฟล์
       }; 
       reader.readAsDataURL(file); 
     } else { 
-      await execForm(payload); 
-    }
-<<<<<<< HEAD:Index.html
-
-    try {
-      
-    } catch (error) {
-      
+      await execForm(payload); // เรียกฟังก์ชันส่งข้อมูลแบบไม่มีไฟล์
     }
   });
-
-=======
-  });
-
->>>>>>> 3b687b56ba6b19e3a1e40036500c8bc47b133ea6:index.html
-      async function execForm(payload) {
-        const res = await api(
-          payload.id ? "updateRequest" : "submitRequest",
-          payload,
-        );
-        res.status === "success"
-          ? Swal.fire("สำเร็จ", "บันทึกเรียบร้อย", "success").then(() => {
-              currentUser.role === "Admin" ? loadAdminDash() : loadUserDash();
-            })
-          : Swal.fire("ผิดพลาด", res.message, "error");
-      }
+  
+  // =====================================
+  // ฟังก์ชันช่วยเหลือสำหรับส่งข้อมูลไปหลังบ้าน
+  // =====================================
+  async function execForm(payload) { 
+    // ตรวจสอบว่ามี ID ไหม ถ้ามีแปลว่ากำลัง "แก้ไข" (updateRequest) ถ้าไม่มีแปลว่า "สร้างใหม่" (submitRequest)
+    const res = await api(payload.id ? 'updateRequest' : 'submitRequest', payload); 
+    
+    if (res.status === 'success') {
+      Swal.fire('สำเร็จ', 'บันทึกเรียบร้อย', 'success').then(() => { 
+        // รีโหลดตารางให้ผู้ใช้งานอัตโนมัติ
+        currentUser.role === 'Admin' ? loadAdminDash() : loadUserDash(); 
+      });
+    } else {
+      Swal.fire('ผิดพลาด', res.message, 'error'); 
+    }
+  }
+ 
 
       // --- PDF EXPORT ---
       function generatePDF(id) {
