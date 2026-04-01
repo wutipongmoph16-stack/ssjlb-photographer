@@ -927,7 +927,7 @@
         <div
           style="
             position: absolute;
-            bottom: 15mm;
+            bottom: 10mm;
             right: 15mm;
             font-size: 10px;
             color: gray;
@@ -1508,32 +1508,93 @@
     }
   }  //end showForm
 
-      async function loadUserDash() {
-        hideAllDash();
-        document.getElementById("userDash").classList.remove("hidden");
-        resetNavButtons();
-        const res = await api("getUserRequests", {
-          username: currentUser.username,
-        });
-        userRequestsData = res.data;
-        let tbody = "";
-        res.data.reverse().forEach((r) => {
-          let badge =
-            r.Status === "อนุมัติแล้ว"
-              ? "bg-success"
-              : r.Status === "ยกเลิกแล้ว"
-                ? "bg-danger"
-                : r.Status === "เสร็จสิ้น"
-                  ? "bg-secondary"
-                  : "bg-warning text-dark";
-          let actBtns = `<button class="btn btn-sm btn-outline-primary mb-1" onclick="generatePDF('${r.RequestID}')"><i class="bi bi-printer"></i> PDF</button> `;
-          if (r.Status === "รออนุมัติ") {
-            actBtns += `<button class="btn btn-sm btn-outline-warning mb-1" onclick="triggerEdit('${r.RequestID}')"><i class="bi bi-pencil"></i> แก้ไข</button> <button class="btn btn-sm btn-outline-danger mb-1" onclick="cancelReq('${r.RequestID}')"><i class="bi bi-x-circle"></i> ยกเลิก</button>`;
-          }
-          tbody += `<tr><td class="text-nowrap"><span class="badge ${badge}">${r.Status}</span><br><small class="text-muted">${r.RequestID}</small></td><td><b>${r.ProjectName}</b></td><td class="text-nowrap">${getThaiDateFull(r.EventDate)}</td><td>${r.Location || "-"}</td><td class="col-action">${actBtns}</td></tr>`;
-        });
-        document.getElementById("userTableBody").innerHTML = tbody;
+// =====================================
+  // โหลด Dashboard ของผู้ใช้ทั่วไป
+  // =====================================
+  async function loadUserDash() {
+    hideAllDash(); 
+    document.getElementById('userDash').classList.remove('hidden'); 
+    resetNavButtons();
+    
+    const res = await api('getUserRequests', { username: currentUser.username }); 
+    userRequestsData = res.data; 
+    let tbody = '';
+    
+    res.data.reverse().forEach((r) => { 
+      let badge = r.Status === 'อนุมัติแล้ว' ? 'bg-success' : (r.Status === 'ยกเลิกแล้ว' ? 'bg-danger' : (r.Status === 'เสร็จสิ้น' ? 'bg-secondary' : 'bg-warning text-dark')); 
+      
+      // ปุ่ม PDF มีให้ทุกคนทุกสถานะ
+      let actBtns = `<button class="btn btn-sm btn-outline-warning mb-1 w-100" onclick="generatePDF('${r.RequestID}')"><i class="bi bi-printer"></i> PDF</button>`; 
+      
+      if(r.Status === 'รออนุมัติ') { 
+        actBtns += `<button class="btn btn-sm btn-outline-warning mb-1 w-100" onclick="triggerEdit('${r.RequestID}')"><i class="bi bi-pencil"></i> แก้ไข</button> 
+                    <button class="btn btn-sm btn-outline-danger mb-1 w-100" onclick="cancelReq('${r.RequestID}')"><i class="bi bi-x-circle"></i> ยกเลิก</button>`; 
+      } 
+      // 📌 ถ้าสถานะเป็น "เสร็จสิ้น" ให้แสดงปุ่ม "ดูผลงาน"
+      else if (r.Status === 'เสร็จสิ้น') {
+        actBtns += `<button class="btn btn-sm btn-success mb-1 w-100 shadow-sm" onclick="viewUserWorkResult('${r.RequestID}')"><i class="bi bi-images"></i> ดูผลงาน</button>`;
       }
+      
+      tbody += `<tr>
+                  <td class="text-nowrap"><span class="badge ${badge}">${r.Status}</span><br><small class="text-muted">${r.RequestID}</small></td>
+                  <td><b>${r.ProjectName}</b></td>
+                  <td class="text-nowrap">${getThaiDateFull(r.EventDate)} <br><small class="text-muted">${fmtTime(r.StartTime)}-${fmtTime(r.EndTime)} น.</span></td>
+                  <td>${r.Location || '-'}</td>
+                  <td class="col-action text-center">${actBtns}</td>
+                </tr>`; 
+    }); 
+    
+    document.getElementById('userTableBody').innerHTML = tbody;
+  }
+
+  // =====================================
+  // ฟังก์ชันดูผลการปฏิบัติงาน (สำหรับ User)
+  // =====================================
+  function viewUserWorkResult(id) {
+    const req = userRequestsData.find(r => r.RequestID === id);
+    if(!req) return;
+
+    // ตรวจสอบว่ามีลิงก์ส่งงานหรือไม่
+    let linkHtml = "";
+    if (req.SentLink && req.SentLink.trim() !== "-" && req.SentLink.trim() !== "") {
+      linkHtml = `<a href="${req.SentLink}" target="_blank" class="btn btn-primary w-100 mt-3 py-2 fw-bold shadow-sm" style="border-radius: 8px;">
+                    <i class="bi bi-cloud-arrow-down-fill"></i> คลิกเปิดดูไฟล์ / ดาวน์โหลดผลงาน
+                  </a>`;
+    } else {
+      linkHtml = `<div class="alert alert-secondary text-center mt-3 mb-0 py-2"><i class="bi bi-info-circle"></i> ไม่มีลิงก์แนบไฟล์</div>`;
+    }
+
+    let html = `
+      <div class="text-start" style="font-size: 0.95rem; line-height: 1.6;">
+        <div class="mb-3 px-2">
+          <b><i class="bi bi-person-video text-success"></i> ช่างภาพผู้รับผิดชอบ:</b> <span class="text-dark">${req.AssignedTo || '-'}</span>
+        </div>
+        
+        <div class="mb-3 p-3 bg-light border-start border-4 border-primary rounded shadow-sm">
+          <b class="text-primary"><i class="bi bi-journal-text"></i> สรุปผลการปฏิบัติงาน:</b><br>
+          <span class="text-dark">${(req.WorkSummary || '-').replace(/\n/g, '<br>')}</span>
+        </div>
+        
+        <div class="mb-2 p-3 bg-light border-start border-4 border-warning rounded shadow-sm">
+          <b class="text-warning text-darken"><i class="bi bi-exclamation-triangle"></i> ปัญหาและอุปสรรค:</b><br>
+          <span class="text-muted">${(req.Obstacles || '-').replace(/\n/g, '<br>')}</span>
+        </div>
+        
+        ${linkHtml}
+      </div>
+    `;
+
+    Swal.fire({
+      title: 'รายละเอียดผลงาน',
+      html: html,
+      width: '500px',
+      showCloseButton: true,
+      confirmButtonText: 'ปิดหน้าต่าง',
+      confirmButtonColor: '#6c757d'
+    });
+  }
+      
+      
       function triggerEdit(id) {
         const req = userRequestsData.find((r) => r.RequestID === id);
         if (req) showForm(req);
@@ -2046,7 +2107,7 @@
 
 
             // 📌 1. ใส่ #toolbar=0 ต่อท้าย URL เพื่อซ่อนแถบสีดำของเบราว์เซอร์
-            document.getElementById('pdfPreviewFrame').src = pdfUrl + '#toolbar=0'; 
+            document.getElementById('pdfPreviewFrame').src = pdfUrl ; 
             
             // 📌 2. สร้างปุ่มดาวน์โหลดเองใน Modal Footer
             const modalFooter = document.querySelector('#pdfPreviewModal .modal-footer');
