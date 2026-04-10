@@ -1399,150 +1399,174 @@
         );
       }
 
-      function showForm(editData = null) {
-    hideAllDash(); 
-    document.getElementById('reqFormSec').classList.remove('hidden'); 
-    document.getElementById('serviceForm').reset();
+// =====================================
+  // แสดงหน้าฟอร์ม (รองรับทั้งสร้างใหม่ และแก้ไข)
+  // =====================================
+  async function showForm(editData = null) {
     
-    // ซ่อนช่องกรอก "อื่นๆ" ให้หมดก่อนเริ่ม
-    ['otherActTxt', 'otherPrTxt', 'otherDelTxt'].forEach(id => { 
-      if(document.getElementById(id)) { 
-        document.getElementById(id).classList.add('hidden'); 
-        document.getElementById(id).value = ""; 
-      }
-    });
-    
-    if(editData) {
-      // โหมดแก้ไข (Edit)
-      document.getElementById('formTitle').innerText = "แก้ไขคำขอ: " + editData.RequestID; 
-      document.getElementById('btnSubmitForm').innerText = "บันทึกการแก้ไข"; 
-      document.getElementById('btnSubmitForm').classList.replace('btn-success', 'btn-warning');
-      document.getElementById('editId').value = editData.RequestID; 
-      document.getElementById('projectName').value = editData.ProjectName; 
-      document.getElementById('eventDate').value = new Date(editData.EventDate).toISOString().split('T')[0];
-      
-      // 1. จัดการเวลา Dropdown 00-23, 00-59
-      const st = fmtTime(editData.StartTime).split(':');
-      if(st.length === 2) { 
-        document.getElementById('startHH').value = st[0]; 
-        document.getElementById('startMM').value = st[1]; 
-      }
-      
-      const en = fmtTime(editData.EndTime).split(':');
-      if(en.length === 2) { 
-        document.getElementById('endHH').value = en[0]; 
-        document.getElementById('endMM').value = en[1]; 
-      }
-      
-      const dp = fmtTime(editData.DepTime).split(':');
-      if(dp.length === 2 && dp[0] !== "00") { 
-        document.getElementById('depHH').value = dp[0]; 
-        document.getElementById('depMM').value = dp[1]; 
-      } else {
-        document.getElementById('depHH').value = ""; 
-        document.getElementById('depMM').value = "";
-      }
-      
-      // 2. จัดการสถานที่ (ใน/นอก สสจ.)
-      if(editData.LocationType === 'นอก สสจ.') { 
-        document.getElementById('locOut').checked = true; 
-        toggleLocUI(); 
-        document.getElementById('outLocation').value = editData.Location || ""; 
-      } else { 
-        document.getElementById('locIn').checked = true; 
-        toggleLocUI(); 
-        let loc = editData.Location || ""; 
-        let opts = Array.from(document.getElementById('ddRoom').options).map(o => o.value);
-        if(opts.includes(loc) && loc !== 'สถานที่อื่นๆ ภายใน สสจ.') { 
-          document.getElementById('ddRoom').value = loc; 
-          toggleRoomUI(); 
-          document.getElementById('otherRoom').value = ""; 
-        } else { 
-          document.getElementById('ddRoom').value = 'สถานที่อื่นๆ ภายใน สสจ.'; 
-          toggleRoomUI(); 
-          document.getElementById('otherRoom').value = loc; 
+    // 1. ระบบ Lazy Load: โหลดข้อมูลตั้งค่า (กิจกรรม, ห้อง, ช่องทาง) เฉพาะครั้งแรกที่เปิดฟอร์ม
+    if (!globalActivities || globalActivities.length === 0) {
+      Swal.fire({title: 'กำลังเตรียมฟอร์ม...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+      try {
+        // วิ่งไปดึงข้อมูลตั้งค่าจาก Backend (เช็คชื่อ API ให้ตรงกับที่คุณใช้)
+        const configData = await api('getFormDataOptions'); 
+        
+        globalActivities = configData.activities || [];
+        globalPRChannels = configData.prChannels || [];
+        globalDeliveries = configData.deliveries || [];
+        
+        // ถ้าคุณมีฟังก์ชันสร้าง Checkbox อัตโนมัติ ให้เรียกใช้ตรงนี้
+        if (typeof renderCheckboxes === 'function') {
+           renderCheckboxes(); 
         }
+      } catch(e) {
+        console.error("โหลดข้อมูลฟอร์มไม่สำเร็จ", e);
+        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
+        return; // หยุดทำงานถ้าโหลดไม่สำเร็จ
       }
+      Swal.close();
+    }
+
+    // 2. ซ่อนหน้าตารางและแสดงหน้าฟอร์ม
+    hideAllDash(); 
+    document.getElementById('serviceForm').reset(); 
+    document.getElementById('formSection').classList.remove('hidden');
+
+    // ล้างค่า Checkbox เก่าทั้งหมดก่อน
+    document.querySelectorAll('input[type="checkbox"]').forEach(chk => chk.checked = false);
+
+    // 3. ตรวจสอบโหมด (สร้างใหม่ หรือ แก้ไข)
+    if (editData) {
+      // ------------------------------------
+      // โหมด: แก้ไขคำขอ (Edit Mode)
+      // ------------------------------------
+      document.getElementById('formTitle').innerText = "แก้ไขคำขอใช้บริการ";
       
-      document.getElementById('ddVeh').value = editData.Vehicle; 
+      // กำหนดค่ารหัสคำขอที่กำลังแก้ไข
+      document.getElementById('editId').value = editData.RequestID; 
+      document.getElementById('projectName').value = editData.ProjectName;
       document.getElementById('remarkTxt').value = editData.Remark || "";
 
-      // 3. ติ๊ก Checkbox ตามฐานข้อมูล
-      const tickChk = (dataStr, cls, txtId) => { 
-        let arr = dataStr.split(', '); 
-        document.querySelectorAll(cls).forEach(c => { 
-          if(arr.includes(c.value)) c.checked = true; 
-          let otherItem = arr.find(a => a.startsWith('อื่นๆ')); 
-          if(c.value === "อื่นๆ" && otherItem) { 
-            c.checked = true; 
-            document.getElementById(txtId).classList.remove('hidden'); 
-            let match = otherItem.match(/\((.*?)\)/); 
-            if(match) document.getElementById(txtId).value = match[1]; 
-          } 
-        }); 
+      // เซ็ตวันที่
+      if (editData.EventDate) {
+        let dObj = new Date(editData.EventDate);
+        document.getElementById('eventDate').value = dObj.getFullYear() + '-' + String(dObj.getMonth() + 1).padStart(2, '0') + '-' + String(dObj.getDate()).padStart(2, '0');
+      }
+
+      // เซ็ตเวลาเริ่มต้น และ เวลาสิ้นสุด
+      let st = editData.StartTime || "08:00";
+      let en = editData.EndTime || "09:00";
+      setTimeDropdown('startHH', 'startMM', st.substring(0,2), st.substring(3,5));
+      setTimeDropdown('endHH', 'endMM', en.substring(0,2), en.substring(3,5));
+
+      // เซ็ตสถานที่
+      if (editData.LocationType === "ใน สสจ.") {
+        document.getElementById('locIn').checked = true;
+        // กรณีเป็นสถานที่อื่นๆ ภายใน
+        if (editData.Location && !document.querySelector(`#ddRoom option[value="${editData.Location}"]`)) {
+            document.getElementById('ddRoom').value = "สถานที่อื่นๆ ภายใน สสจ.";
+            document.getElementById('otherRoom').value = editData.Location;
+        } else {
+            document.getElementById('ddRoom').value = editData.Location || "";
+        }
+      } else {
+        document.getElementById('locOut').checked = true;
+        document.getElementById('outLocation').value = editData.Location || "";
+        document.getElementById('ddVeh').value = editData.Vehicle || "";
+        let dep = editData.DepTime || "";
+        if(dep) setTimeDropdown('depHH', 'depMM', dep.substring(0,2), dep.substring(3,5));
+      }
+
+      // ฟังก์ชันช่วยติ๊ก Checkbox ให้ตรงกับข้อมูลเดิม
+      const setChecks = (cls, dataStr, txtId) => {
+        if (!dataStr) return;
+        document.querySelectorAll(cls).forEach(chk => {
+          if (dataStr.includes(chk.value) && chk.value !== "อื่นๆ") chk.checked = true;
+        });
+        if (dataStr.includes("อื่นๆ")) {
+          let otherChk = document.querySelector(`${cls}[value="อื่นๆ"]`);
+          if (otherChk) otherChk.checked = true;
+          let match = dataStr.match(/อื่นๆ \((.*?)\)/);
+          if (match && document.getElementById(txtId)) document.getElementById(txtId).value = match[1];
+        }
       };
-      
-      tickChk(editData.Activities, '.chk-act', 'otherActTxt'); 
-      tickChk(editData.PRChannels, '.chk-pr', 'otherPrTxt'); 
-      tickChk(editData.Delivery, '.chk-del', 'otherDelTxt');
-      
+
+      setChecks('.chk-act', editData.Activities, 'otherActTxt');
+      setChecks('.chk-pr', editData.PRChannels, 'otherPrTxt');
+      setChecks('.chk-del', editData.Delivery, 'otherDelTxt');
+
     } else {
-      // โหมดสร้างคำขอใหม่
-      document.getElementById('formTitle').innerText = "สร้างคำขอใช้บริการ"; 
-      document.getElementById('btnSubmitForm').innerText = "บันทึกส่งคำขอ"; 
-      document.getElementById('btnSubmitForm').classList.replace('btn-warning', 'btn-success'); 
-      document.getElementById('editId').value = "";
+      // ------------------------------------
+      // โหมด: สร้างคำขอใหม่ (Create Mode)
+      // ------------------------------------
+      document.getElementById('formTitle').innerText = "แบบฟอร์มขอใช้บริการ PR";
+      document.getElementById('editId').value = ""; // ล้างรหัส
       
-      // ตั้งค่าเริ่มต้น สถานที่ใน สสจ.
-      document.getElementById('locIn').checked = true; 
-      document.getElementById('ddRoom').selectedIndex = 0; 
-      toggleLocUI(); 
-      toggleRoomUI();
-      
-      // ตั้งค่าเวลาเริ่มต้น (Default) เป็น 08:00 และ 09:00
+      // ตั้งค่าวันที่เริ่มต้นเป็น วันนี้
+      document.getElementById('eventDate').value = new Date().toLocaleDateString('en-CA');
+
+      // 📌 ตั้งค่าเวลาเริ่มต้น (ตามที่คุณต้องการ)
       setTimeDropdown('startHH', 'startMM', '08', '00');
       setTimeDropdown('endHH', 'endMM', '09', '00');
       setTimeDropdown('depHH', 'depMM', '08', '00');
-    }
-  }  //end showForm
 
+      // ตั้งค่าเริ่มต้นสถานที่ เป็น "ใน สสจ."
+      document.getElementById('locIn').checked = true;
+    }
+    
+    // รีเฟรชการแสดงผลฟิลด์อื่นๆ (เช่น ซ่อน/แสดง กล่องสถานที่นอก สสจ.)
+    if(typeof toggleLocationFields === 'function') toggleLocationFields();
+  }
+
+  
 // =====================================
   // โหลด Dashboard ของผู้ใช้ทั่วไป
+// =====================================
+  // โหลด Dashboard ของผู้ใช้ทั่วไป (เวอร์ชันโหลดเร็ว)
   // =====================================
   async function loadUserDash() {
     hideAllDash(); 
     document.getElementById('userDash').classList.remove('hidden'); 
     resetNavButtons();
     
-    const res = await api('getUserRequests', { username: currentUser.username }); 
-    userRequestsData = res.data; 
-    let tbody = '';
+    // โชว์ Loading สวยๆ ระหว่างรอข้อมูล
+    Swal.fire({title: 'กำลังโหลดข้อมูล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
     
-    res.data.reverse().forEach((r) => { 
-      let badge = r.Status === 'อนุมัติแล้ว' ? 'bg-success' : (r.Status === 'ยกเลิกแล้ว' ? 'bg-danger' : (r.Status === 'เสร็จสิ้น' ? 'bg-secondary' : 'bg-warning text-dark')); 
+    // 📌 เปลี่ยนมาเรียกใช้ API ตัว Fast Load แทนตัวเก่า
+    const res = await api('getUserRequestsFast', currentUser.username); 
+    Swal.close(); // ปิด Loading เมื่อโหลดเสร็จ
+
+    if(res.status === 'success') {
+      userRequestsData = res.data; // เก็บข้อมูลไว้ใช้
+      let tbody = '';
       
-      // ปุ่ม PDF มีให้ทุกคนทุกสถานะ
-      let actBtns = `<button class="btn btn-sm btn-outline-warning mb-1 w-100" onclick="generatePDF('${r.RequestID}')"><i class="bi bi-printer"></i> PDF</button>`; 
-      
-      if(r.Status === 'รออนุมัติ') { 
-        actBtns += `<button class="btn btn-sm btn-outline-warning mb-1 w-100" onclick="triggerEdit('${r.RequestID}')"><i class="bi bi-pencil"></i> แก้ไข</button> 
-                    <button class="btn btn-sm btn-outline-danger mb-1 w-100" onclick="cancelReq('${r.RequestID}')"><i class="bi bi-x-circle"></i> ยกเลิก</button>`; 
-      } 
-      // 📌 ถ้าสถานะเป็น "เสร็จสิ้น" ให้แสดงปุ่ม "ดูผลงาน"
-      else if (r.Status === 'เสร็จสิ้น') {
-        actBtns += `<button class="btn btn-sm btn-success mb-1 w-100 shadow-sm" onclick="viewUserWorkResult('${r.RequestID}')"><i class="bi bi-images"></i> ดูผลงาน</button>`;
+      if(userRequestsData.length === 0) {
+        tbody = `<tr><td colspan="5" class="text-center text-muted py-4">ยังไม่มีประวัติการส่งคำขอ</td></tr>`;
+      } else {
+        // ข้อมูลถูก Reverse มาจาก Backend แล้ว ไม่ต้อง Reverse อีก
+        userRequestsData.forEach((r) => { 
+          let badge = r.Status === 'อนุมัติแล้ว' ? 'bg-success' : (r.Status === 'ยกเลิกแล้ว' ? 'bg-danger' : (r.Status === 'เสร็จสิ้น' ? 'bg-secondary' : 'bg-warning text-dark')); 
+          
+          let actBtns = `<button class="btn btn-sm btn-outline-primary mb-1 w-100" onclick="generatePDF('${r.RequestID}')"><i class="bi bi-printer"></i> PDF</button>`; 
+          if(r.Status === 'รออนุมัติ') { 
+            actBtns += `<button class="btn btn-sm btn-outline-warning mb-1 w-100" onclick="triggerEdit('${r.RequestID}')"><i class="bi bi-pencil"></i> แก้ไข</button> 
+                        <button class="btn btn-sm btn-outline-danger mb-1 w-100" onclick="cancelReq('${r.RequestID}')"><i class="bi bi-x-circle"></i> ยกเลิก</button>`; 
+          } else if (r.Status === 'เสร็จสิ้น') {
+            actBtns += `<button class="btn btn-sm btn-success mb-1 w-100 shadow-sm" onclick="viewUserWorkResult('${r.RequestID}')"><i class="bi bi-images"></i> ดูผลงาน</button>`;
+          }
+          
+          tbody += `<tr>
+                      <td class="text-nowrap"><span class="badge ${badge}">${r.Status}</span><br><small class="text-muted">${r.RequestID}</small></td>
+                      <td><b>${r.ProjectName}</b></td>
+                      <td class="text-nowrap">${r.EventDate}</td> <td>${r.Location || '-'}</td>
+                      <td class="col-action text-center">${actBtns}</td>
+                    </tr>`; 
+        }); 
       }
-      
-      tbody += `<tr>
-                  <td class="text-nowrap"><span class="badge ${badge}">${r.Status}</span><br><small class="text-muted">${r.RequestID}</small></td>
-                  <td><b>${r.ProjectName}</b></td>
-                  <td class="text-nowrap">${getThaiDateFull(r.EventDate)} <br><small class="text-muted">${fmtTime(r.StartTime)}-${fmtTime(r.EndTime)} น.</span></td>
-                  <td>${r.Location || '-'}</td>
-                  <td class="col-action text-center">${actBtns}</td>
-                </tr>`; 
-    }); 
-    
-    document.getElementById('userTableBody').innerHTML = tbody;
+      document.getElementById('userTableBody').innerHTML = tbody;
+    } else {
+      Swal.fire('ผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้', 'error');
+    }
   }
 
   // =====================================
