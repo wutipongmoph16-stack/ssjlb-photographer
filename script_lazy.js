@@ -219,8 +219,11 @@
               arr.forEach((a) => (html += `<option value="${a}">${a}</option>`));
               if(document.getElementById(id)) document.getElementById(id).innerHTML = html;
             };
-            fillDD("ddPos", res.positions);
-            fillDD("ddDept", res.departments);
+            // 📌 เพิ่มคำสั่ง sort เรียงตัวอักษรภาษาไทย ก-ฮ
+            fillDD("ddPos", res.positions.sort((a, b) => a.localeCompare(b, 'th')));
+            
+            // 💡 แนะนำให้เรียง "แผนก" ด้วยครับ จะได้ค้นหาง่ายเหมือนกัน
+            fillDD("ddDept", res.departments.sort((a, b) => a.localeCompare(b, 'th')));
             fillDD("ddVeh", res.vehicles);
             fillDD("ddRoom", res.meetingRooms);
             
