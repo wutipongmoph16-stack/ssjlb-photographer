@@ -553,10 +553,46 @@
         if (req) showForm(req);
       }
       
+      // =====================================
+      // ฟังก์ชันยกเลิกคำขอ (อัปเดตใหม่)
+      // =====================================
       async function cancelReq(id) {
-        if (confirm("ต้องการยกเลิกคำขอนี้ใช่หรือไม่?")) {
-          await api("cancelRequest", { id });
-          loadUserDash();
+        const cf = await Swal.fire({
+          title: 'ยืนยันการยกเลิก?',
+          text: `คุณต้องการยกเลิกคำขอ ${id} ใช่หรือไม่?`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#dc3545',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'ยืนยันยกเลิก',
+          cancelButtonText: 'ปิดหน้าต่าง'
+        });
+
+        if (cf.isConfirmed) {
+          // 1. แสดง Loading ไม่ให้ผู้ใช้กดซ้ำ
+          Swal.fire({ title: 'กำลังยกเลิกคำขอ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          
+          try {
+            // 📌 2. ส่ง id พร้อมกับ username ไปให้หลังบ้านล้าง Cache ทันที
+            const res = await api("cancelRequest", { id: id, username: currentUser.username });
+            
+            if (res.status === 'success') {
+              Swal.fire({
+                title: 'สำเร็จ',
+                text: 'ยกเลิกคำขอเรียบร้อยแล้ว',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+              }).then(() => {
+                // โหลดตารางใหม่ (ซึ่งครั้งนี้จะได้ข้อมูลใหม่เพราะ Cache ถูกล้างแล้ว)
+                loadUserDash();
+              });
+            } else {
+              Swal.fire('ผิดพลาด', res.message, 'error');
+            }
+          } catch (e) {
+            Swal.fire('ผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
+          }
         }
       }
 
@@ -892,10 +928,17 @@
       // =====================================
       // PDF EXPORT
       // =====================================
-      function generatePDF(id) {
+      // =====================================
+      // PDF EXPORT (อัปเกรดระบบ Fallback กันข้อมูลหาย)
+      // =====================================
+      async function generatePDF(id) {
         let req = allRequestsData.find((r) => r.RequestID === id) || userRequestsData.find((r) => r.RequestID === id);
         if (!req) return Swal.fire("ข้อผิดพลาด", "ไม่พบข้อมูลคำขอ", "error");
+        
         Swal.fire({ title: "กำลังสร้างตัวอย่าง...", didOpen: () => Swal.showLoading() });
+        
+        await loadFormOptions();
+
         const checkedIcon = "☑", uncheckIcon = "☐";
 
         document.getElementById("pdfReqId").innerText = req.RequestID;
@@ -926,26 +969,65 @@
           document.getElementById("pdfDepTime").innerText = "";
         }
 
+        // 📌 1. ใส่ตัวเลือกสำรอง (Fallback) ป้องกันกรณีดึงข้อมูลจาก Sheet ไม่สำเร็จ
+        let defAct = ["ถ่ายภาพโครงการ/กิจกรรม", "ถ่ายภาพบุคคล", "ถ่ายภาพสถานที่", "ถ่ายวิดีโอและตัดต่อ", "บันทึกเสียง", "Live Streaming", "ทำ Infographic", "อื่นๆ"];
+        let defPR = ["ไม่ต้องการประชาสัมพันธ์", "Facebook Page สสจ.", "TikTok", "Website หน่วยงาน", "อื่นๆ"];
+        let defDel = ["ส่งทาง LINE", "ส่งทาง e-Mail", "บันทึกใส่ Flash Drive", "ส่งผ่าน Google Drive"];
+        
+        let actList = (globalActivities && globalActivities.length > 0) ? globalActivities : defAct;
+        let prList = (globalPRChannels && globalPRChannels.length > 0) ? globalPRChannels : defPR;
+        let delList = (globalDeliveries && globalDeliveries.length > 0) ? globalDeliveries : defDel;
+
+        // 📌 2. ฟังก์ชันวาด Checkbox อัจฉริยะ (ดึงค่าที่ User เลือกมาบังคับแสดงเสมอ)
         const genDynCol = (arrDb, reqStr) => {
           let html = "";
-          arrDb.forEach((item) => {
-            let isChked = reqStr.includes(item) ? checkedIcon : uncheckIcon;
-            if (item === "อื่นๆ") { let match = reqStr.match(/อื่นๆ \((.*?)\)/); html += `<div style="display: inline-block; width: 100%; margin-bottom: 3px;">${isChked} อื่นๆ ${match ? match[1] : ""}</div>`; } 
-            else { html += `<div style="display: inline-block; width: 49%; margin-bottom: 3px;">${isChked} ${item}</div>`; }
-          }); return html;
-        };
-        const genDynRow = (arrDb, reqStr) => {
-          let html = "";
-          arrDb.forEach((item) => {
-            let isChked = reqStr.includes(item) ? checkedIcon : uncheckIcon;
-            if (item === "อื่นๆ") { let match = reqStr.match(/อื่นๆ \((.*?)\)/); html += `<span style="margin-right: 15px;">${isChked} อื่นๆ ${match ? match[1] : ""}</span>`; } 
-            else { html += `<span style="margin-right: 15px;">${isChked} ${item}</span>`; }
-          }); return html;
+          let reqStrSafe = reqStr || "";
+          
+          // นำตัวเลือกหลัก มารวมกับสิ่งที่ User พิมพ์มา เพื่อให้ชัวร์ว่ามีให้ติ๊กถูกเสมอ
+          let reqArr = reqStrSafe.split(", ").filter(x => x);
+          let combinedArr = [...new Set([...arrDb, ...reqArr.map(r => r.startsWith("อื่นๆ") ? "อื่นๆ" : r)])];
+
+          combinedArr.forEach((item) => {
+            let isChked = reqStrSafe.includes(item) ? checkedIcon : uncheckIcon;
+            if (item === "อื่นๆ") { 
+               let match = reqStrSafe.match(/อื่นๆ \((.*?)\)/); 
+               if (match || reqStrSafe.includes("อื่นๆ")) {
+                 html += `<div style="display: inline-block; width: 100%; margin-bottom: 3px;">${checkedIcon} อื่นๆ ${match ? match[1] : ""}</div>`; 
+               } else {
+                 html += `<div style="display: inline-block; width: 100%; margin-bottom: 3px;">${uncheckIcon} อื่นๆ ...........................</div>`; 
+               }
+            } else { 
+               html += `<div style="display: inline-block; width: 49%; margin-bottom: 3px;">${isChked} ${item}</div>`; 
+            }
+          }); 
+          return html;
         };
 
-        document.getElementById("pdfDynActivities").innerHTML = genDynCol(globalActivities, req.Activities || "");
-        document.getElementById("pdfDynPRChannels").innerHTML = genDynRow(globalPRChannels, req.PRChannels || "");
-        document.getElementById("pdfDynDeliveries").innerHTML = genDynRow(globalDeliveries, req.Delivery || "");
+        const genDynRow = (arrDb, reqStr) => {
+          let html = "";
+          let reqStrSafe = reqStr || "";
+          let reqArr = reqStrSafe.split(", ").filter(x => x);
+          let combinedArr = [...new Set([...arrDb, ...reqArr.map(r => r.startsWith("อื่นๆ") ? "อื่นๆ" : r)])];
+
+          combinedArr.forEach((item) => {
+            let isChked = reqStrSafe.includes(item) ? checkedIcon : uncheckIcon;
+            if (item === "อื่นๆ") { 
+               let match = reqStrSafe.match(/อื่นๆ \((.*?)\)/); 
+               if (match || reqStrSafe.includes("อื่นๆ")) {
+                 html += `<span style="margin-right: 15px;">${checkedIcon} อื่นๆ ${match ? match[1] : ""}</span>`; 
+               } else {
+                 html += `<span style="margin-right: 15px;">${uncheckIcon} อื่นๆ ...........................</span>`; 
+               }
+            } else { 
+               html += `<span style="margin-right: 15px;">${isChked} ${item}</span>`; 
+            }
+          }); 
+          return html;
+        };
+
+        document.getElementById("pdfDynActivities").innerHTML = genDynCol(actList, req.Activities);
+        document.getElementById("pdfDynPRChannels").innerHTML = genDynRow(prList, req.PRChannels);
+        document.getElementById("pdfDynDeliveries").innerHTML = genDynRow(delList, req.Delivery);
         document.getElementById("pdfRemarkStr").innerText = req.Remark || "-";
         document.getElementById("pdfSignName").innerText = req.FullName;
 
