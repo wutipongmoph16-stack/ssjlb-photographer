@@ -1,7 +1,7 @@
 
       // =====================================
-      const GAS_URL = "https://script.google.com/macros/s/AKfycbyWwlz0VHuH7z9kXxgCaw_LU4QIfpZ9S9ZBZWPzfgmYgzmUaEG6qWuxHNvHL7goqheW2A/exec"; 
-      const LIFF_ID = "2008846144-kbJ6yOGH";
+      const GAS_URL = "https://script.google.com/macros/s/AKfycbyWwlz0VHuH7z9kXxgCaw_LU4QIfpZ9S9ZBZWPzfgmYgzmUaEG6qWuxHNvHL7goqheW2A/exec"; // Yuttasad
+      const LIFF_ID = "2008846144-kbJ6yOGH";  // STG-AllLogin
       // =====================================
 
       let currentUser = null,
@@ -463,6 +463,23 @@
           setTimeDropdown('endHH', 'endMM', '09', '00');
           setTimeDropdown('depHH', 'depMM', '08', '00');
         }
+      }
+
+      // =====================================
+      // ปิดฟอร์มกลับหน้าหลัก (โดยไม่โหลดตารางใหม่)
+      // =====================================
+      function closeFormWithoutReload() {
+        // 1. ซ่อนหน้าฟอร์ม
+        document.getElementById('reqFormSec').classList.add('hidden');
+        
+        // 2. โชว์หน้า Dashboard เดิมที่เคยโหลดไว้แล้ว (แยกตามสิทธิ์ผู้ใช้)
+        if (currentUser.role === 'Admin') {
+          document.getElementById('adminDash').classList.remove('hidden');
+        } else {
+          document.getElementById('userDash').classList.remove('hidden');
+        }
+        
+        // 💡 สังเกตว่าเราไม่ใช้คำสั่ง loadUserDash() ตารางเก่าจึงยังอยู่ครบถ้วนและไม่กระตุกครับ
       }
 
       async function loadUserDash() {
@@ -1033,3 +1050,56 @@
           Swal.fire("ข้อผิดพลาด", "ไม่สามารถเชื่อมต่อระบบได้", "error");
         }
       }
+
+      // =====================================
+      // ระบบลงทะเบียนผู้ใช้ใหม่ (Register)
+      // =====================================
+      document.getElementById('regForm').addEventListener('submit', async function(e) {
+        e.preventDefault(); // ป้องกันหน้าเว็บรีเฟรช
+
+        // ดึงปุ่มมาเปลี่ยนสถานะเป็น Loading ไม่ให้กดซ้ำ
+        const btnSubmit = this.querySelector('button[type="submit"]');
+        const originalText = btnSubmit.innerText;
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> กำลังบันทึกข้อมูล...`;
+
+        // รวบรวมข้อมูลจากฟอร์ม (อ้างอิงจาก name ใน HTML)
+        const payload = {
+          username: this.username.value.trim(),
+          password: this.password.value,
+          fullName: this.fullName.value.trim(),
+          position: this.position.value,
+          department: this.department.value,
+          phone: this.phone.value.trim(),
+          email: this.email.value.trim(),
+          lineUID: currentLineUID // ถ้าเข้ามาทาง LINE จะมีตัวแปรนี้ติดไปผูกบัญชีด้วย
+        };
+
+        Swal.fire({
+          title: "กำลังลงทะเบียน...",
+          html: "ระบบกำลังบันทึกข้อมูลของคุณลงฐานข้อมูล",
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading(),
+        });
+
+        try {
+          // ส่งข้อมูลไปให้หลังบ้าน (Code.gs)
+          const res = await api("registerUser", payload); 
+          
+          if (res.status === "success") {
+            Swal.fire("สำเร็จ!", "ลงทะเบียนเรียบร้อยแล้ว<br>กรุณาเข้าสู่ระบบ", "success").then(() => {
+              this.reset(); // ล้างข้อมูลในฟอร์ม
+              toggleAuth(); // สลับหน้าจอกลับไปที่กล่องล็อกอิน
+            });
+          } else {
+            Swal.fire("ข้อผิดพลาด", res.message || "ไม่สามารถลงทะเบียนได้", "error");
+          }
+        } catch (error) {
+          console.error("Register Error:", error);
+          Swal.fire("ข้อผิดพลาด", "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้", "error");
+        } finally {
+          // คืนค่าปุ่มกลับมาเหมือนเดิม เผื่อเกิด Error แล้วต้องกดใหม่
+          btnSubmit.disabled = false;
+          btnSubmit.innerText = originalText;
+        }
+      });
