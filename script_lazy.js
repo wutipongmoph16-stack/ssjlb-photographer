@@ -676,12 +676,23 @@
       function changeAdminPage(page) { currentAdminPage = page; renderAdminTable(); }
 
       async function promptApprove(reqId) {
+        // 📌 เพิ่มบรรทัดนี้: สั่งให้โหลดรายชื่อช่างภาพ (และตัวเลือกอื่นๆ) ก่อนเปิดหน้าต่าง
+        await loadFormOptions();
+
         let req = allRequestsData.find((r) => r.RequestID === reqId);
         let options = {};
         photographersList.forEach((p) => (options[p] = p));
+        
         const { value: photographer } = await Swal.fire({
-          title: "มอบหมายช่างภาพ", input: "select", inputOptions: options, inputPlaceholder: "-- เลือกช่างภาพ --", showCancelButton: true, confirmButtonText: "ยืนยัน", cancelButtonText: "ยกเลิก",
+          title: "มอบหมายช่างภาพ", 
+          input: "select", 
+          inputOptions: options, 
+          inputPlaceholder: "-- เลือกช่างภาพ --", 
+          showCancelButton: true, 
+          confirmButtonText: "ยืนยัน", 
+          cancelButtonText: "ยกเลิก",
         });
+
         if (photographer) {
           let conflictMsg = "";
           globalApprovedEvents.forEach((ev) => {
@@ -690,10 +701,12 @@
               if (reqStart < ev.endStr && reqEnd > ev.startStr) conflictMsg += `<br><b class="text-danger">- ${ev.projectName} (${ev.startStr} - ${ev.endStr})</b>`;
             }
           });
+          
           if (conflictMsg !== "") {
             const cf = await Swal.fire({ title: "คิวช่างภาพซ้อนทับ!", html: `<b>${photographer}</b> มีคิวงานแล้ว:${conflictMsg}<br><br>ยืนยันที่จะอนุมัติให้ช่างภาพคนนี้หรือไม่?`, icon: "warning", showCancelButton: true, confirmButtonText: "ยืนยันอนุมัติ", cancelButtonText: "ยกเลิก", });
             if (!cf.isConfirmed) return;
           }
+          
           Swal.fire({ title: "กำลังบันทึก...", didOpen: () => Swal.showLoading() });
           await api("updateStatus", { id: reqId, status: "อนุมัติแล้ว", assignedTo: photographer });
           Swal.fire("เรียบร้อย", "อัปเดตสำเร็จ", "success");
