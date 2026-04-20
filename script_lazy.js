@@ -398,8 +398,10 @@
           document.getElementById('btnSubmitForm').innerText = "บันทึกการแก้ไข"; 
           document.getElementById('btnSubmitForm').classList.replace('btn-success', 'btn-warning');
           document.getElementById('editId').value = editData.RequestID; 
-          document.getElementById('projectName').value = editData.ProjectName; 
-          document.getElementById('eventDate').value = new Date(editData.EventDate).toISOString().split('T')[0];
+          document.getElementById('projectName').value = editData.ProjectName;
+
+          let ed = new Date(editData.EventDate);
+          document.getElementById('eventDate').value = ed.getFullYear() + "-" + String(ed.getMonth() + 1).padStart(2, '0') + "-" + String(ed.getDate()).padStart(2, '0');
           
           const st = fmtTime(editData.StartTime).split(':');
           if(st.length === 2) { document.getElementById('startHH').value = st[0]; document.getElementById('startMM').value = st[1]; }
@@ -676,7 +678,6 @@
       function changeAdminPage(page) { currentAdminPage = page; renderAdminTable(); }
 
       async function promptApprove(reqId) {
-        // 📌 เพิ่มบรรทัดนี้: สั่งให้โหลดรายชื่อช่างภาพ (และตัวเลือกอื่นๆ) ก่อนเปิดหน้าต่าง
         await loadFormOptions();
 
         let req = allRequestsData.find((r) => r.RequestID === reqId);
@@ -695,8 +696,14 @@
 
         if (photographer) {
           let conflictMsg = "";
+
+          // 📌 1. แปลงวันที่ให้เป็นเวลา Local Time (ไทย) ป้องกันการเหลื่อมวัน
+          let d = new Date(req.EventDate);
+          let reqDateStr = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+
           globalApprovedEvents.forEach((ev) => {
-            if (ev.assignedTo === photographer && ev.dateStr === new Date(req.EventDate).toISOString().split("T")[0]) {
+            // 📌 2. นำ reqDateStr ที่แปลงแล้ว มาเช็คเทียบกับคิวงาน
+            if (ev.assignedTo === photographer && ev.dateStr === reqDateStr) {
               let reqStart = fmtTime(req.StartTime); let reqEnd = fmtTime(req.EndTime);
               if (reqStart < ev.endStr && reqEnd > ev.startStr) conflictMsg += `<br><b class="text-danger">- ${ev.projectName} (${ev.startStr} - ${ev.endStr})</b>`;
             }
